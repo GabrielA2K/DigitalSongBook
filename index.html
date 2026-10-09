@@ -424,8 +424,31 @@
         // Core Application State
         let songbookSongs = [];
         let filteredSongs = [];
-        let favoriteIds = new Set(JSON.parse(localStorage.getItem('songbook_fav_ids') || '[]'));
-        let songNotesMap = JSON.parse(localStorage.getItem('songbook_notes') || '{}');
+        let favoriteIds = new Set();
+        let songNotesMap = {};
+
+        // Helper function to handle iOS / browser storage quota limits safely
+        function safeSetLocalStorage(key, value) {
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e) {
+                console.warn(`Browser storage limit reached for key "${key}":`, e);
+                return false;
+            }
+        }
+
+        try {
+            favoriteIds = new Set(JSON.parse(localStorage.getItem('songbook_fav_ids') || '[]'));
+        } catch(e) {
+            favoriteIds = new Set();
+        }
+
+        try {
+            songNotesMap = JSON.parse(localStorage.getItem('songbook_notes') || '{}');
+        } catch(e) {
+            songNotesMap = {};
+        }
         
         let currentSearchQuery = '';
         let currentScope = 'all'; // 'all', 'title', 'artist', 'number'
@@ -563,9 +586,9 @@
         });
 
         function loadStoredOrDemoSongs() {
-            const saved = localStorage.getItem('songbook_songs_data');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('songbook_songs_data');
+                if (saved) {
                     const parsed = JSON.parse(saved);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         songbookSongs = processRawSongArray(parsed);
@@ -574,16 +597,16 @@
                         applyFiltersAndRender();
                         return;
                     }
-                } catch(e) {
-                    console.error("Error reading stored songs", e);
                 }
+            } catch(e) {
+                console.error("Error reading stored songs", e);
             }
             restoreDefaultDemoSongs(false);
         }
 
         function restoreDefaultDemoSongs(notify = true) {
             songbookSongs = processRawSongArray(DEFAULT_SONGBOOK);
-            localStorage.setItem('songbook_songs_data', JSON.stringify(DEFAULT_SONGBOOK));
+            safeSetLocalStorage('songbook_songs_data', JSON.stringify(DEFAULT_SONGBOOK));
             document.getElementById('catalogTitle').innerText = "Classic Karaoke Catalog";
             document.getElementById('sourceBadge').innerText = "Demo Songs Loaded";
             document.getElementById('sourceBadge').className = "text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2.5 py-0.5 rounded-full font-semibold";
@@ -978,20 +1001,7 @@
             } else {
                 delete songNotesMap[activeSongObj.id];
             }
-            localStorage.setItem('songbook_notes', JSON.stringify(songNotesMap));
-        }
-
-        function updateModalFavState() {
-            if (!activeSongObj) return;
-            const isFav = favoriteIds.has(activeSongObj.id);
-            const textEl = document.getElementById('modalFavText');
-            textEl.innerText = isFav ? 'In Favorites' : 'Add to Favorites';
-        }
-
-        function toggleModalFav() {
-            if (!activeSongObj) return;
-            toggleFavoriteId(activeSongObj.id);
-            updateModalFavState();
+            safeSetLocalStorage('songbook_notes', JSON.stringify(songNotesMap));
         }
 
         function toggleFavoriteId(songId) {
@@ -1002,7 +1012,7 @@
                 favoriteIds.add(songId);
                 showToast(`Added #${songId} to favorites!`, "success");
             }
-            localStorage.setItem('songbook_fav_ids', JSON.stringify([...favoriteIds]));
+            safeSetLocalStorage('songbook_fav_ids', JSON.stringify([...favoriteIds]));
             updateFavsBadgeCount();
             applyFiltersAndRender();
         }
@@ -1163,17 +1173,21 @@
                 }
 
                 songbookSongs = processRawSongArray(parsedSongs);
-                localStorage.setItem('songbook_songs_data', JSON.stringify(parsedSongs));
+                const isSaved = safeSetLocalStorage('songbook_songs_data', JSON.stringify(parsedSongs));
 
                 closeUploadModal();
                 
                 const displayTitle = fileName !== "Selected File" ? fileName.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
                 document.getElementById('catalogTitle').innerText = displayTitle;
-                document.getElementById('sourceBadge').innerText = "Custom File Loaded";
+                document.getElementById('sourceBadge').innerText = isSaved ? "Custom File Loaded" : "Session Mode";
                 document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
 
                 applyFiltersAndRender();
-                showToast(`Loaded ${parsedSongs.length} songs from "${fileName}"!`, "success");
+                if (isSaved) {
+                    showToast(`Loaded ${parsedSongs.length} songs from "${fileName}"!`, "success");
+                } else {
+                    showToast(`Loaded ${parsedSongs.length} songs for this session (browser storage quota full).`, "info");
+                }
             };
 
             // PapaParse works natively directly on File objects on iOS Safari
@@ -1250,15 +1264,19 @@
             }
 
             songbookSongs = processRawSongArray(parsedSongs);
-            localStorage.setItem('songbook_songs_data', JSON.stringify(parsedSongs));
+            const isSaved = safeSetLocalStorage('songbook_songs_data', JSON.stringify(parsedSongs));
 
             closeUploadModal();
             document.getElementById('catalogTitle').innerText = "Pasted Songbook";
-            document.getElementById('sourceBadge').innerText = "Custom File Loaded";
+            document.getElementById('sourceBadge').innerText = isSaved ? "Custom File Loaded" : "Session Mode";
             document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
 
             applyFiltersAndRender();
-            showToast(`Loaded ${parsedSongs.length} songs from pasted text!`, "success");
+            if (isSaved) {
+                showToast(`Loaded ${parsedSongs.length} songs from pasted text!`, "success");
+            } else {
+                showToast(`Loaded ${parsedSongs.length} songs for this session (browser storage quota full).`, "info");
+            }
         }
 
         function parseCSVTextTo2DArray(text) {
@@ -1313,10 +1331,6 @@
             return lines;
         }
 
-        /**
-         * Smart parser converts raw 2D row array into normalized Song objects.
-         * Handles headers with different column names or headerless files.
-         */
         function parseRowsToSongs(rows) {
             const cleanRows = rows.filter(r => Array.isArray(r) && r.some(cell => String(cell).trim().length > 0));
             if (cleanRows.length === 0) return [];
@@ -1370,87 +1384,6 @@
             }
 
             return songs;
-        }
-
-        function processCSVFile(file) {
-            if (!file) return;
-
-            // Visual upload feedback
-            document.getElementById('uploadMainText').innerText = `Reading "${file.name}"...`;
-            document.getElementById('uploadSubText').innerText = "Parsing contents...";
-            document.getElementById('uploadIcon').className = "fa-solid fa-spinner animate-spin text-2xl text-gold-400";
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let fileText = e.target.result;
-                    if (!fileText || !fileText.trim()) {
-                        showToast("The selected file appears to be empty.", "error");
-                        resetUploadUI();
-                        return;
-                    }
-
-                    // Strip UTF-8 Byte Order Mark (BOM) if present
-                    fileText = fileText.replace(/^\uFEFF/, '');
-
-                    let rawRows = [];
-
-                    // 1. Try PapaParse if available
-                    if (typeof Papa !== 'undefined' && Papa.parse) {
-                        const parsed = Papa.parse(fileText, {
-                            skipEmptyLines: 'greedy',
-                            dynamicTyping: false
-                        });
-                        if (parsed && parsed.data && parsed.data.length > 0) {
-                            rawRows = parsed.data;
-                        }
-                    }
-
-                    // 2. Fallback parser if PapaParse produced no rows
-                    if (!rawRows || rawRows.length === 0) {
-                        rawRows = parseCSVTextTo2DArray(fileText);
-                    }
-
-                    if (!rawRows || rawRows.length === 0) {
-                        showToast("Could not extract any rows from file.", "error");
-                        resetUploadUI();
-                        return;
-                    }
-
-                    const parsedSongs = parseRowsToSongs(rawRows);
-
-                    if (parsedSongs.length === 0) {
-                        showToast("No valid song data could be read from this file.", "error");
-                        resetUploadUI();
-                        return;
-                    }
-
-                    songbookSongs = processRawSongArray(parsedSongs);
-                    localStorage.setItem('songbook_songs_data', JSON.stringify(parsedSongs));
-
-                    closeUploadModal();
-                    
-                    const displayTitle = file.name ? file.name.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
-                    document.getElementById('catalogTitle').innerText = displayTitle;
-                    document.getElementById('sourceBadge').innerText = "Custom File Loaded";
-                    document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
-
-                    applyFiltersAndRender();
-                    showToast(`Loaded ${parsedSongs.length} songs from "${file.name}"!`, "success");
-                } catch(err) {
-                    console.error("CSV process error", err);
-                    showToast("Error processing CSV: " + err.message, "error");
-                    resetUploadUI();
-                } finally {
-                    const inputEl = document.getElementById('csvFileInput');
-                    if (inputEl) inputEl.value = '';
-                }
-            };
-            reader.onerror = function() {
-                showToast("Failed to read the file.", "error");
-                resetUploadUI();
-            };
-            reader.readAsText(file);
         }
 
         function downloadSampleCSV() {
