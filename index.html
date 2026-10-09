@@ -264,16 +264,19 @@
             </div>
         </div>
 
+        <!-- Alphabet Bar -->
         <div class="no-print bg-stage-900/60 rounded-xl border border-stage-700/60 p-2 overflow-x-auto no-scrollbar">
             <div id="alphabetBar" class="flex items-center gap-1 min-w-max text-xs font-semibold font-mono">
                 <!-- Dynamically populated via JavaScript -->
             </div>
         </div>
 
+        <!-- Songs Grid / List Container -->
         <div id="songsContainer" class="min-h-[350px]">
             <!-- Dynamic Song Cards / Rows / Binder View inserted here -->
         </div>
 
+        <!-- Pagination Controls -->
         <div id="paginationBar" class="no-print flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pt-4 border-t border-stage-800 text-xs sm:text-sm text-slate-400">
             <div class="flex items-center space-x-2">
                 <span>Show:</span>
@@ -304,20 +307,20 @@
                     <i class="fa-solid fa-file-arrow-up text-gold-400"></i>
                     <span>Upload Songbook CSV</span>
                 </h3>
-                <p class="text-xs text-slate-400">Upload a `.csv` file containing song headers: <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">No</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Title</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Artist</code> (and <code class="text-slate-500 font-mono bg-stage-950 px-1 rounded">PDF Page</code> which is ignored).</p>
+                <p class="text-xs text-slate-400">Upload a `.csv`, `.txt`, or `.tsv` file. Headers like <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">No</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Title</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Artist</code> are auto-detected (or raw columns without headers).</p>
             </div>
 
             <!-- Drag and Drop Dropzone -->
             <div id="dragDropArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)" class="relative border-2 border-dashed border-stage-700 hover:border-gold-500 bg-stage-950/70 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group overflow-hidden">
-                <!-- Native file input overlaid directly for 100% reliable iOS Safari touch interaction -->
-                <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain,application/vnd.ms-excel,.txt,text/*,application/csv" onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <!-- Native file input overlaid directly for 100% reliable touch & click interaction -->
+                <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain,application/vnd.ms-excel,.txt,.tsv,.dat,text/*,application/csv" onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                 <div class="space-y-3 pointer-events-none">
-                    <div class="w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                    <div id="uploadIconContainer" class="w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition">
+                        <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-slate-200">Tap or click to choose CSV file</p>
-                        <p class="text-xs text-slate-500 mt-1 font-mono">Numbers auto-pad to 5 digits (e.g. 1 &rarr; 00001)</p>
+                        <p id="uploadMainText" class="text-sm font-semibold text-slate-200">Tap or click to choose CSV file</p>
+                        <p id="uploadSubText" class="text-xs text-slate-500 mt-1 font-mono">Numbers auto-pad to 5 digits (e.g. 1 &rarr; 00001)</p>
                     </div>
                 </div>
             </div>
@@ -332,9 +335,6 @@
         </div>
     </div>
 
-    <div id="songDetailModal" class="no-print fixed inset-0 bg-stage-950/85 backdrop-blur-md z-50 hidden items-center justify-center p-4">
-        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-5 gold-border-glow overflow-hidden">
-            <!-- Background Record Accent -->
     <div id="songDetailModal" class="no-print fixed inset-0 bg-stage-950/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
         <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative space-y-4 sm:space-y-5 gold-border-glow overflow-hidden max-h-[90vh] overflow-y-auto my-auto">
             <!-- Background Record Accent -->
@@ -398,6 +398,9 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
     <script>
         // Core Application State
         let songbookSongs = [];
@@ -419,7 +422,7 @@
         // Web Audio Synthesizer Context
         let audioContext = null;
 
-        // Rich Pre-loaded Default Classics Dataset (25+ iconic titles across genres)
+        // Default Classics Songbook Dataset
         const DEFAULT_SONGBOOK = [
             { no: "1", title: "Bohemian Rhapsody", artist: "Queen" },
             { no: "2", title: "Hotel California", artist: "Eagles" },
@@ -449,8 +452,8 @@
         ];
 
         /**
-         * Converts any song number into a padded 5-digit string.
-         * Examples: '1' -> '00001', '452' -> '00452', '12345' -> '12345'
+         * Formats any song number string/number to 5 digits padding.
+         * e.g., '1' -> '00001', '452' -> '00452', '12345' -> '12345'
          */
         function format5DigitNumber(val) {
             if (val === undefined || val === null) return '00000';
@@ -463,7 +466,7 @@
             return cleanStr.padStart(5, '0');
         }
 
-        // Reads state variables directly from URL Query Parameters for persistence across refreshes
+        // Reads state variables directly from URL Query Parameters
         function readStateFromUrl() {
             const params = new URLSearchParams(window.location.search);
             if (params.has('q')) currentSearchQuery = params.get('q');
@@ -476,7 +479,7 @@
             if (params.has('size')) pageSize = parseInt(params.get('size'), 10) || 48;
         }
 
-        // Synchronizes current active state to URL query string without reloading page
+        // Synchronizes current active state to URL query string
         function updateUrlParams() {
             const params = new URLSearchParams();
             if (currentSearchQuery) params.set('q', currentSearchQuery);
@@ -495,7 +498,6 @@
             }
         }
 
-        // Reflects current JS state onto UI elements (Inputs, Dropdowns, Scope buttons)
         function syncUIWithState() {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
@@ -521,14 +523,12 @@
             loadStoredOrDemoSongs();
             updateFavsBadgeCount();
 
-            // Support Browser Back/Forward buttons
             window.addEventListener('popstate', () => {
                 readStateFromUrl();
                 syncUIWithState();
                 applyFiltersAndRender();
             });
 
-            // Keyboard shortcut Ctrl+F / Cmd+F to focus search
             window.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
                     e.preventDefault();
@@ -544,7 +544,7 @@
                     const parsed = JSON.parse(saved);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         songbookSongs = processRawSongArray(parsed);
-                        document.getElementById('sourceBadge').innerText = "Loaded Saved CSV";
+                        document.getElementById('sourceBadge').innerText = "Loaded Saved Songs";
                         document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
                         applyFiltersAndRender();
                         return;
@@ -559,6 +559,7 @@
         function restoreDefaultDemoSongs(notify = true) {
             songbookSongs = processRawSongArray(DEFAULT_SONGBOOK);
             localStorage.setItem('songbook_songs_data', JSON.stringify(DEFAULT_SONGBOOK));
+            document.getElementById('catalogTitle').innerText = "Classic Karaoke Catalog";
             document.getElementById('sourceBadge').innerText = "Demo Songs Loaded";
             document.getElementById('sourceBadge').className = "text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2.5 py-0.5 rounded-full font-semibold";
             applyFiltersAndRender();
@@ -574,9 +575,9 @@
                 const formatted5Digit = format5DigitNumber(rawNo);
 
                 return {
-                    id: formatted5Digit, // Always 5 digits string e.g. "00045"
-                    rawNo: rawNo,         // E.g. "45"
-                    intNo: intNo,         // E.g. 45
+                    id: formatted5Digit,
+                    rawNo: rawNo,
+                    intNo: intNo,
                     title: String(item.title || 'Untitled').trim(),
                     artist: String(item.artist || 'Unknown Artist').trim()
                 };
@@ -612,11 +613,11 @@
         function setSearchScope(scope, triggerRender = true) {
             currentScope = scope;
             document.querySelectorAll('.scope-btn').forEach(b => {
-                b.className = "scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition";
+                b.className = "scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0";
             });
             const activeBtn = document.getElementById(`scope-${scope}`);
             if (activeBtn) {
-                activeBtn.className = "scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm";
+                activeBtn.className = "scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0";
             }
             if (triggerRender) {
                 currentPage = 1;
@@ -631,9 +632,9 @@
                 const b = document.getElementById(`let-${let}`);
                 if (b) {
                     if (let === letter) {
-                        b.className = "px-2.5 py-1 rounded-md bg-gold-500 text-slate-950 font-bold transition";
+                        b.className = "px-2.5 py-1.5 min-w-[32px] h-8 rounded-md flex items-center justify-center bg-gold-500 text-slate-950 font-bold transition flex-shrink-0";
                     } else {
-                        b.className = "px-2.5 py-1 rounded-md bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800 transition";
+                        b.className = "px-2.5 py-1.5 min-w-[32px] h-8 rounded-md flex items-center justify-center bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800 transition flex-shrink-0";
                     }
                 }
             });
@@ -671,13 +672,8 @@
             const isQueryNumeric = !isNaN(qAsInt) && /^\d+$/.test(q);
 
             filteredSongs = songbookSongs.filter(song => {
-                // Search matching
                 let matchesSearch = true;
                 if (q) {
-                    // Check song number match:
-                    // 1. 5-digit formatted string e.g. "00045"
-                    // 2. original raw string e.g. "45"
-                    // 3. exact integer match e.g. 45
                     const numMatch = song.id.includes(q) || 
                                      song.rawNo.toLowerCase().includes(q) || 
                                      (isQueryNumeric && song.intNo === qAsInt);
@@ -696,7 +692,6 @@
                     }
                 }
 
-                // Letter matching
                 let matchesLetter = true;
                 if (currentLetter !== 'ALL') {
                     const first = song.title.trim().charAt(0).toUpperCase();
@@ -707,7 +702,6 @@
                     }
                 }
 
-                // Favorites matching
                 let matchesFavs = true;
                 if (showFavsOnly) {
                     matchesFavs = favoriteIds.has(song.id);
@@ -716,7 +710,6 @@
                 return matchesSearch && matchesLetter && matchesFavs;
             });
 
-            // Sorting logic
             filteredSongs.sort((a, b) => {
                 switch (currentSort) {
                     case 'num-asc':
@@ -736,7 +729,6 @@
                 }
             });
 
-            // Update stats
             document.getElementById('statTotalSongs').innerText = songbookSongs.length;
             document.getElementById('statFilteredSongs').innerText = filteredSongs.length;
 
@@ -779,7 +771,6 @@
                 return;
             }
 
-            // Pagination calculation
             const totalPages = Math.ceil(filteredSongs.length / pageSize);
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
@@ -867,45 +858,6 @@
             `;
         }
 
-        function renderListItemHtml(song) {
-            const isFav = favoriteIds.has(song.id);
-            return `
-                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print px-4 py-3 flex items-center justify-between hover:bg-stage-800/60 cursor-pointer transition group">
-                    <div class="flex items-center space-x-4 min-w-0">
-                        <span class="font-mono font-bold text-gold-400 text-sm bg-stage-950 border border-stage-700 px-3 py-1 rounded-md min-w-[75px] text-center">${song.id}</span>
-                        <div class="min-w-0">
-                            <span class="text-sm font-semibold text-slate-100 group-hover:text-gold-300 transition truncate block">${escapeHtml(song.title)}</span>
-                            <span class="text-xs text-slate-400 truncate block sm:inline">${escapeHtml(song.artist)}</span>
-                        </div>
-                    </div>
-                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print p-1 text-slate-600 hover:text-amber-400 transition">
-                        <i class="fa-solid fa-star text-sm ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderBinderCardHtml(song) {
-            const isFav = favoriteIds.has(song.id);
-            return `
-                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print bg-gradient-to-r from-stage-900 to-stage-800 border-l-4 border-l-gold-500 border border-stage-700 rounded-r-xl p-4 cursor-pointer hover:bg-stage-800/80 transition flex items-center justify-between group">
-                    <div class="flex items-center space-x-4 min-w-0">
-                        <div class="text-center min-w-[70px]">
-                            <span class="block text-[9px] uppercase font-mono tracking-wider text-slate-500 font-bold">SONG CODE</span>
-                            <span class="text-lg font-mono font-bold text-gold-400">${song.id}</span>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="text-base font-bold text-slate-100 group-hover:text-gold-300 transition truncate">${escapeHtml(song.title)}</h4>
-                            <p class="text-xs text-slate-400 mt-0.5 truncate">${escapeHtml(song.artist)}</p>
-                        </div>
-                    </div>
-                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print p-2 text-slate-600 hover:text-amber-400 transition">
-                        <i class="fa-solid fa-star text-base ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
-                    </button>
-                </div>
-            `;
-        }
-
         function handlePageSizeChange() {
             pageSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
             currentPage = 1;
@@ -930,7 +882,6 @@
 
             let html = '';
             
-            // Prev
             html += `
                 <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-2 py-1 rounded bg-stage-950 text-slate-600 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded bg-stage-800 hover:bg-stage-700 text-slate-300 transition"'}>
                     &laquo;
@@ -951,7 +902,6 @@
                 }
             }
 
-            // Next
             html += `
                 <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="px-2 py-1 rounded bg-stage-950 text-slate-600 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded bg-stage-800 hover:bg-stage-700 text-slate-300 transition"'}>
                     &raquo;
@@ -979,7 +929,6 @@
             document.getElementById('modalSongTitle').innerText = song.title;
             document.getElementById('modalSongArtist').innerText = song.artist;
             
-            // Notes pad
             document.getElementById('modalSongNotes').value = songNotesMap[song.id] || '';
 
             updateModalFavState();
@@ -1085,6 +1034,7 @@
         }
 
         function openUploadModal() {
+            resetUploadUI();
             const modal = document.getElementById('uploadModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1094,6 +1044,18 @@
             const modal = document.getElementById('uploadModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            resetUploadUI();
+        }
+
+        function resetUploadUI() {
+            const dropArea = document.getElementById('dragDropArea');
+            if (dropArea) {
+                dropArea.classList.remove('border-gold-500', 'bg-stage-900');
+            }
+            document.getElementById('uploadMainText').innerText = "Tap or click to choose CSV file";
+            document.getElementById('uploadSubText').innerText = "Numbers auto-pad to 5 digits (e.g. 1 \u2192 00001)";
+            document.getElementById('uploadIcon').className = "fa-solid fa-cloud-arrow-up text-2xl";
+            document.getElementById('uploadIconContainer').className = "w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition";
         }
 
         function handleDragOver(e) {
@@ -1120,11 +1082,20 @@
             }
         }
 
-        function parseCSVText(text) {
+        function parseCSVTextTo2DArray(text) {
             const lines = [];
             let currentRow = [];
             let currentVal = '';
             let inQuotes = false;
+
+            // Auto-detect line 1 delimiter: comma, semicolon, tab, pipe
+            const firstLineEnd = text.search(/\r\n|\n|\r/);
+            const sampleLine = firstLineEnd !== -1 ? text.substring(0, firstLineEnd) : text;
+            
+            let delimiter = ',';
+            if (sampleLine.includes(';') && !sampleLine.includes(',')) delimiter = ';';
+            else if (sampleLine.includes('\t')) delimiter = '\t';
+            else if (sampleLine.includes('|')) delimiter = '|';
 
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
@@ -1137,7 +1108,7 @@
                     } else {
                         inQuotes = !inQuotes;
                     }
-                } else if (char === ',' && !inQuotes) {
+                } else if (char === delimiter && !inQuotes) {
                     currentRow.push(currentVal.trim());
                     currentVal = '';
                 } else if ((char === '\r' || char === '\n') && !inQuotes) {
@@ -1160,80 +1131,118 @@
                     lines.push(currentRow);
                 }
             }
-            if (lines.length === 0) return [];
+            return lines;
+        }
 
-            const headers = lines[0].map(h => h.trim().toLowerCase());
-            const data = [];
+        /**
+         * Smart parser converts raw 2D row array into normalized Song objects.
+         * Handles headers with different column names or headerless files.
+         */
+        function parseRowsToSongs(rows) {
+            const cleanRows = rows.filter(r => Array.isArray(r) && r.some(cell => String(cell).trim().length > 0));
+            if (cleanRows.length === 0) return [];
 
-            for (let r = 1; r < lines.length; r++) {
-                const row = lines[r];
-                const obj = {};
-                headers.forEach((h, idx) => {
-                    obj[h] = row[idx] !== undefined ? row[idx] : '';
-                });
-                data.push(obj);
+            const firstRow = cleanRows[0].map(c => String(c !== undefined && c !== null ? c : '').trim());
+            const lowerFirstRow = firstRow.map(c => c.toLowerCase());
+
+            // Header key search patterns
+            const noIdx = lowerFirstRow.findIndex(k => k.includes('no') || k.includes('num') || k.includes('#') || k.includes('code') || k.includes('id') || k.includes('track'));
+            const titleIdx = lowerFirstRow.findIndex(k => k.includes('title') || k.includes('song') || k.includes('name') || k.includes('description'));
+            const artistIdx = lowerFirstRow.findIndex(k => k.includes('artist') || k.includes('singer') || k.includes('band') || k.includes('performer') || k.includes('by'));
+
+            const hasHeader = (noIdx !== -1 || titleIdx !== -1 || artistIdx !== -1);
+
+            let startRowIndex = 0;
+            let colNoIndex = 0;
+            let colTitleIndex = 1;
+            let colArtistIndex = 2;
+
+            if (hasHeader) {
+                startRowIndex = 1; // Skip header row
+                colNoIndex = noIdx !== -1 ? noIdx : 0;
+                colTitleIndex = titleIdx !== -1 ? titleIdx : (colNoIndex === 0 ? 1 : 0);
+                colArtistIndex = artistIdx !== -1 ? artistIdx : (colNoIndex !== 2 && colTitleIndex !== 2 ? 2 : 1);
             }
-            return data;
+
+            const songs = [];
+
+            for (let i = startRowIndex; i < cleanRows.length; i++) {
+                const row = cleanRows[i].map(c => String(c !== undefined && c !== null ? c : '').trim());
+                if (row.length === 0) continue;
+
+                let rawNo = row[colNoIndex] !== undefined ? row[colNoIndex] : '';
+                let titleVal = row[colTitleIndex] !== undefined ? row[colTitleIndex] : '';
+                let artistVal = row[colArtistIndex] !== undefined ? row[colArtistIndex] : '';
+
+                // Fallbacks if columns are missing or shifted
+                if (!titleVal && rawNo && !/^\d+$/.test(rawNo)) {
+                    titleVal = rawNo;
+                    rawNo = String(songs.length + 1);
+                }
+
+                if (!artistVal) artistVal = 'Unknown Artist';
+                if (!titleVal) titleVal = 'Untitled Song';
+
+                songs.push({
+                    no: rawNo || String(songs.length + 1),
+                    title: titleVal,
+                    artist: artistVal
+                });
+            }
+
+            return songs;
         }
 
         function processCSVFile(file) {
             if (!file) return;
 
-            // iOS Safari & Mobile compatibility: file.type is frequently empty string or generic octet-stream on iOS Files app
-            const fileNameLower = file.name ? file.name.toLowerCase() : '';
-            const isCsvExt = fileNameLower.endsWith('.csv') || fileNameLower.endsWith('.txt') || fileNameLower.endsWith('.tsv') || fileNameLower.endsWith('.dat');
-            const isCsvType = !file.type || file.type.includes('csv') || file.type.includes('text') || file.type.includes('excel') || file.type === 'application/octet-stream';
-
-            if (!isCsvExt && !isCsvType) {
-                showToast("Please upload a valid CSV or text file.", "error");
-                return;
-            }
+            // Visual upload feedback
+            document.getElementById('uploadMainText').innerText = `Reading "${file.name}"...`;
+            document.getElementById('uploadSubText').innerText = "Parsing contents...";
+            document.getElementById('uploadIcon').className = "fa-solid fa-spinner animate-spin text-2xl text-gold-400";
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const fileText = e.target.result;
-                    let parsedData = [];
-
-                    if (typeof Papa !== 'undefined' && Papa.parse) {
-                        const results = Papa.parse(fileText, {
-                            header: true,
-                            skipEmptyLines: true,
-                            transformHeader: (h) => h.trim().toLowerCase()
-                        });
-                        parsedData = results.data || [];
-                    } else {
-                        parsedData = parseCSVText(fileText);
-                    }
-
-                    if (!parsedData || parsedData.length === 0) {
-                        showToast("No valid rows found in CSV.", "error");
+                    let fileText = e.target.result;
+                    if (!fileText || !fileText.trim()) {
+                        showToast("The selected file appears to be empty.", "error");
+                        resetUploadUI();
                         return;
                     }
 
-                    const parsedSongs = [];
-                    parsedData.forEach((row, i) => {
-                        const keys = Object.keys(row);
-                        
-                        const noKey = keys.find(k => k.includes('no') || k.includes('num') || k.includes('#') || k.includes('code'));
-                        const titleKey = keys.find(k => k.includes('title') || k.includes('song') || k.includes('name'));
-                        const artistKey = keys.find(k => k.includes('artist') || k.includes('singer') || k.includes('band'));
+                    // Strip UTF-8 Byte Order Mark (BOM) if present
+                    fileText = fileText.replace(/^\uFEFF/, '');
 
-                        const noVal = noKey ? row[noKey] : String(i + 1);
-                        const titleVal = titleKey ? row[titleKey] : 'Untitled';
-                        const artistVal = artistKey ? row[artistKey] : 'Unknown Artist';
+                    let rawRows = [];
 
-                        if (titleVal || noVal) {
-                            parsedSongs.push({
-                                no: String(noVal).trim(),
-                                title: String(titleVal).trim(),
-                                artist: String(artistVal).trim()
-                            });
+                    // 1. Try PapaParse if available
+                    if (typeof Papa !== 'undefined' && Papa.parse) {
+                        const parsed = Papa.parse(fileText, {
+                            skipEmptyLines: 'greedy',
+                            dynamicTyping: false
+                        });
+                        if (parsed && parsed.data && parsed.data.length > 0) {
+                            rawRows = parsed.data;
                         }
-                    });
+                    }
+
+                    // 2. Fallback parser if PapaParse produced no rows
+                    if (!rawRows || rawRows.length === 0) {
+                        rawRows = parseCSVTextTo2DArray(fileText);
+                    }
+
+                    if (!rawRows || rawRows.length === 0) {
+                        showToast("Could not extract any rows from file.", "error");
+                        resetUploadUI();
+                        return;
+                    }
+
+                    const parsedSongs = parseRowsToSongs(rawRows);
 
                     if (parsedSongs.length === 0) {
-                        showToast("No valid songs found in CSV.", "error");
+                        showToast("No valid song data could be read from this file.", "error");
+                        resetUploadUI();
                         return;
                     }
 
@@ -1242,22 +1251,25 @@
 
                     closeUploadModal();
                     
-                    document.getElementById('catalogTitle').innerText = file.name ? file.name.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
-                    document.getElementById('sourceBadge').innerText = "Custom CSV Loaded";
+                    const displayTitle = file.name ? file.name.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
+                    document.getElementById('catalogTitle').innerText = displayTitle;
+                    document.getElementById('sourceBadge').innerText = "Custom File Loaded";
                     document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
 
                     applyFiltersAndRender();
-                    showToast(`Loaded ${parsedSongs.length} songs formatted to 5 digits!`, "success");
+                    showToast(`Loaded ${parsedSongs.length} songs from "${file.name}"!`, "success");
                 } catch(err) {
+                    console.error("CSV process error", err);
                     showToast("Error processing CSV: " + err.message, "error");
+                    resetUploadUI();
                 } finally {
-                    // Reset input value so selecting the same file again triggers onchange
                     const inputEl = document.getElementById('csvFileInput');
                     if (inputEl) inputEl.value = '';
                 }
             };
             reader.onerror = function() {
-                showToast("Failed to read CSV file.", "error");
+                showToast("Failed to read the file.", "error");
+                resetUploadUI();
             };
             reader.readAsText(file);
         }
