@@ -307,22 +307,41 @@
                     <i class="fa-solid fa-file-arrow-up text-gold-400"></i>
                     <span>Upload Songbook CSV</span>
                 </h3>
-                <p class="text-xs text-slate-400">Upload a `.csv`, `.txt`, or `.tsv` file. Headers like <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">No</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Title</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Artist</code> are auto-detected (or raw columns without headers).</p>
+                <p class="text-xs text-slate-400">Choose a file or paste CSV text directly (ideal for mobile/iOS).</p>
             </div>
 
-            <!-- Drag and Drop Dropzone -->
-            <div id="dragDropArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)" class="relative border-2 border-dashed border-stage-700 hover:border-gold-500 bg-stage-950/70 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group overflow-hidden">
-                <!-- Native file input overlaid directly for 100% reliable touch & click interaction -->
-                <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain,application/vnd.ms-excel,.txt,.tsv,.dat,text/*,application/csv" onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                <div class="space-y-3 pointer-events-none">
-                    <div id="uploadIconContainer" class="w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition">
-                        <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-                    </div>
-                    <div>
-                        <p id="uploadMainText" class="text-sm font-semibold text-slate-200">Tap or click to choose CSV file</p>
-                        <p id="uploadSubText" class="text-xs text-slate-500 mt-1 font-mono">Numbers auto-pad to 5 digits (e.g. 1 &rarr; 00001)</p>
-                    </div>
+            <!-- Upload Mode Switcher Tabs -->
+            <div class="flex rounded-xl bg-stage-950 p-1 border border-stage-800 text-xs font-semibold">
+                <button id="tabBtnFile" onclick="switchUploadTab('file')" class="flex-1 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition">Choose File</button>
+                <button id="tabBtnPaste" onclick="switchUploadTab('paste')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">Paste CSV Text</button>
+            </div>
+
+            <!-- File Upload Tab Content -->
+            <div id="uploadTabFile" class="space-y-3">
+                <div id="dragDropArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)" class="relative border-2 border-dashed border-stage-700 hover:border-gold-500 bg-stage-950/70 rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-all duration-200 group overflow-hidden">
+                    <label for="csvFileInput" class="cursor-pointer block w-full h-full">
+                        <input type="file" id="csvFileInput" accept=".csv,.txt,.tsv,text/*,application/csv,application/vnd.ms-excel" onchange="handleFileSelect(event)" class="sr-only">
+                        <div class="space-y-3 pointer-events-none">
+                            <div id="uploadIconContainer" class="w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition">
+                                <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                            </div>
+                            <div>
+                                <p id="uploadMainText" class="text-sm font-semibold text-slate-200">Tap here to select CSV file</p>
+                                <p id="uploadSubText" class="text-xs text-slate-500 mt-1 font-mono">Supports Files app, iCloud Drive & local CSVs</p>
+                            </div>
+                            <span class="inline-block px-3 py-1.5 bg-stage-800 border border-stage-700 text-gold-400 text-xs font-bold rounded-lg mt-1">Browse Files</span>
+                        </div>
+                    </label>
                 </div>
+            </div>
+
+            <!-- Paste Raw CSV Text Tab Content -->
+            <div id="uploadTabPaste" class="hidden space-y-3">
+                <textarea id="pasteCsvInput" placeholder="Paste your CSV text here...&#10;e.g.&#10;No,Title,Artist&#10;1,Bohemian Rhapsody,Queen&#10;45,Rolling in the Deep,Adele" class="w-full h-36 bg-stage-950 border border-stage-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-gold-500 resize-none"></textarea>
+                <button onclick="processPastedCSV()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 text-slate-950 font-bold text-xs shadow-lg hover:from-amber-500 hover:to-gold-400 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>Load Pasted Songs</span>
+                </button>
             </div>
 
             <div class="flex items-center justify-between pt-3 border-t border-stage-800">
@@ -522,6 +541,12 @@
             syncUIWithState();
             loadStoredOrDemoSongs();
             updateFavsBadgeCount();
+
+            const csvInput = document.getElementById('csvFileInput');
+            if (csvInput) {
+                csvInput.addEventListener('change', handleFileSelect);
+                csvInput.addEventListener('input', handleFileSelect);
+            }
 
             window.addEventListener('popstate', () => {
                 readStateFromUrl();
@@ -1047,15 +1072,41 @@
             resetUploadUI();
         }
 
+        function switchUploadTab(tab) {
+            const fileTab = document.getElementById('uploadTabFile');
+            const pasteTab = document.getElementById('uploadTabPaste');
+            const btnFile = document.getElementById('tabBtnFile');
+            const btnPaste = document.getElementById('tabBtnPaste');
+
+            if (tab === 'paste') {
+                fileTab.classList.add('hidden');
+                pasteTab.classList.remove('hidden');
+                btnFile.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
+                btnPaste.className = "flex-1 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition";
+            } else {
+                pasteTab.classList.add('hidden');
+                fileTab.classList.remove('hidden');
+                btnPaste.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
+                btnFile.className = "flex-1 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition";
+            }
+        }
+
         function resetUploadUI() {
             const dropArea = document.getElementById('dragDropArea');
             if (dropArea) {
                 dropArea.classList.remove('border-gold-500', 'bg-stage-900');
             }
-            document.getElementById('uploadMainText').innerText = "Tap or click to choose CSV file";
-            document.getElementById('uploadSubText').innerText = "Numbers auto-pad to 5 digits (e.g. 1 \u2192 00001)";
+            const inputEl = document.getElementById('csvFileInput');
+            if (inputEl) inputEl.value = '';
+            
+            const pasteEl = document.getElementById('pasteCsvInput');
+            if (pasteEl) pasteEl.value = '';
+
+            document.getElementById('uploadMainText').innerText = "Tap here to select CSV file";
+            document.getElementById('uploadSubText').innerText = "Supports Files app, iCloud Drive & local CSVs";
             document.getElementById('uploadIcon').className = "fa-solid fa-cloud-arrow-up text-2xl";
             document.getElementById('uploadIconContainer').className = "w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition";
+            switchUploadTab('file');
         }
 
         function handleDragOver(e) {
@@ -1071,15 +1122,143 @@
         function handleDropFile(e) {
             e.preventDefault();
             handleDragLeave(e);
-            if (e.dataTransfer.files.length) {
+            if (e.dataTransfer && e.dataTransfer.files.length) {
                 processCSVFile(e.dataTransfer.files[0]);
             }
         }
 
         function handleFileSelect(e) {
-            if (e.target.files.length) {
-                processCSVFile(e.target.files[0]);
+            const files = e.target ? e.target.files : null;
+            if (files && files.length > 0) {
+                processCSVFile(files[0]);
             }
+        }
+
+        function processCSVFile(file) {
+            if (!file) {
+                showToast("No file selected.", "error");
+                return;
+            }
+
+            const fileName = file.name || "Selected File";
+
+            // Visual upload feedback
+            document.getElementById('uploadMainText').innerText = `Reading "${fileName}"...`;
+            document.getElementById('uploadSubText').innerText = "Parsing contents...";
+            document.getElementById('uploadIcon').className = "fa-solid fa-spinner animate-spin text-2xl text-gold-400";
+
+            const applyParsedRows = (rawRows) => {
+                if (!rawRows || rawRows.length === 0) {
+                    showToast("Could not extract rows from file.", "error");
+                    resetUploadUI();
+                    return;
+                }
+
+                const parsedSongs = parseRowsToSongs(rawRows);
+
+                if (parsedSongs.length === 0) {
+                    showToast("No valid song records found.", "error");
+                    resetUploadUI();
+                    return;
+                }
+
+                songbookSongs = processRawSongArray(parsedSongs);
+                localStorage.setItem('songbook_songs_data', JSON.stringify(parsedSongs));
+
+                closeUploadModal();
+                
+                const displayTitle = fileName !== "Selected File" ? fileName.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
+                document.getElementById('catalogTitle').innerText = displayTitle;
+                document.getElementById('sourceBadge').innerText = "Custom File Loaded";
+                document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+
+                applyFiltersAndRender();
+                showToast(`Loaded ${parsedSongs.length} songs from "${fileName}"!`, "success");
+            };
+
+            // PapaParse works natively directly on File objects on iOS Safari
+            if (typeof Papa !== 'undefined' && Papa.parse) {
+                Papa.parse(file, {
+                    skipEmptyLines: 'greedy',
+                    dynamicTyping: false,
+                    complete: function(results) {
+                        if (results && results.data && results.data.length > 0) {
+                            applyParsedRows(results.data);
+                        } else {
+                            readViaFileReader(file, applyParsedRows);
+                        }
+                    },
+                    error: function(err) {
+                        console.warn("PapaParse file error, trying FileReader fallback:", err);
+                        readViaFileReader(file, applyParsedRows);
+                    }
+                });
+            } else {
+                readViaFileReader(file, applyParsedRows);
+            }
+        }
+
+        function readViaFileReader(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let fileText = e.target.result;
+                if (!fileText || !fileText.trim()) {
+                    showToast("The selected file is empty.", "error");
+                    resetUploadUI();
+                    return;
+                }
+                fileText = fileText.replace(/^\uFEFF/, '');
+                const rawRows = parseCSVTextTo2DArray(fileText);
+                callback(rawRows);
+            };
+            reader.onerror = function(err) {
+                console.error("FileReader error:", err);
+                showToast("iOS File Access Error: Unable to read file.", "error");
+                resetUploadUI();
+            };
+            try {
+                reader.readAsText(file, 'UTF-8');
+            } catch (err) {
+                console.error("readAsText exception:", err);
+                showToast("Error opening file: " + err.message, "error");
+                resetUploadUI();
+            }
+        }
+
+        function processPastedCSV() {
+            const pasteInput = document.getElementById('pasteCsvInput');
+            if (!pasteInput) return;
+            const text = pasteInput.value;
+            if (!text || !text.trim()) {
+                showToast("Please paste CSV text first.", "error");
+                return;
+            }
+
+            let rawRows = [];
+            if (typeof Papa !== 'undefined' && Papa.parse) {
+                const parsed = Papa.parse(text, { skipEmptyLines: 'greedy' });
+                if (parsed && parsed.data) rawRows = parsed.data;
+            }
+            if (!rawRows || rawRows.length === 0) {
+                rawRows = parseCSVTextTo2DArray(text);
+            }
+
+            const parsedSongs = parseRowsToSongs(rawRows);
+            if (parsedSongs.length === 0) {
+                showToast("No valid song data could be read from pasted text.", "error");
+                return;
+            }
+
+            songbookSongs = processRawSongArray(parsedSongs);
+            localStorage.setItem('songbook_songs_data', JSON.stringify(parsedSongs));
+
+            closeUploadModal();
+            document.getElementById('catalogTitle').innerText = "Pasted Songbook";
+            document.getElementById('sourceBadge').innerText = "Custom File Loaded";
+            document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+
+            applyFiltersAndRender();
+            showToast(`Loaded ${parsedSongs.length} songs from pasted text!`, "success");
         }
 
         function parseCSVTextTo2DArray(text) {
