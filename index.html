@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Songbook - Vintage Vinyl & Karaoke Binder</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PapaParse CDN for CSV Import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- FontAwesome 6 CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Inter & Cinzel for Vintage Music Aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            100: '#fef9c3',
+                            200: '#fef08a',
+                            300: '#fde047',
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                            700: '#a16207',
+                            800: '#854d0e',
+                            900: '#713f12',
+                        },
+                        stage: {
+                            950: '#07090e',
+                            900: '#0f131d',
+                            800: '#181e2b',
+                            700: '#232b3d',
+                            600: '#323d54',
+                            500: '#465473',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        mono: ['Space Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom scrollbar for songbook binder */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f131d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232b3d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ca8a04;
+        }
+
+        /* Gold gradient typography & glow effects */
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fef08a 0%, #facc15 50%, #a16207 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-border-glow {
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.15);
+        }
+        .gold-border-glow:hover {
+            box-shadow: 0 0 25px rgba(250, 204, 21, 0.3);
+        }
+
+        /* Vinyl Record Rotation Animation */
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 20s linear infinite;
+        }
+
+        /* Print Media Styles for physical songbook export */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .song-card-print {
+                break-inside: avoid;
+                border: 1px solid #ddd !important;
+                background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-stage-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-gold-500 selection:text-slate-950">
+
+    <header class="no-print border-b border-stage-700/80 bg-stage-900/90 backdrop-blur-md sticky top-0 z-40 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            
+            <!-- Logo & Brand Header -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetAllFilters()">
+                <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-gold-300 via-gold-500 to-amber-800 p-0.5 shadow-lg gold-border-glow flex-shrink-0">
+                    <div class="w-full h-full bg-stage-950 rounded-[10px] flex items-center justify-center relative overflow-hidden">
+                        <i class="fa-solid fa-record-vinyl text-gold-400 text-2xl animate-spin-slow"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-serif font-black tracking-wider gold-gradient-text uppercase">Songbook</h1>
+                    <p class="text-[11px] text-slate-400 font-mono tracking-widest uppercase">5-Digit Digital Binder</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Favorites Filter Button -->
+                <button id="favsToggleBtn" onclick="toggleFavoritesOnly()" class="px-3 py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-xs sm:text-sm font-semibold border border-stage-700/80 flex items-center space-x-2 transition text-slate-300">
+                    <i class="fa-solid fa-star text-amber-400"></i>
+                    <span class="hidden sm:inline">Favorites</span>
+                    <span id="favsCountBadge" class="bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-mono font-bold">0</span>
+                </button>
+
+                <!-- Load Sample Demo Songs -->
+                <button onclick="restoreDefaultDemoSongs()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center space-x-1.5 shadow-md shadow-amber-950/40 transition">
+                    <i class="fa-solid fa-music"></i>
+                    <span class="hidden sm:inline">Demo Songs</span>
+                </button>
+
+                <!-- CSV Import Modal Button -->
+                <button onclick="openUploadModal()" class="px-3 py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 font-semibold text-xs sm:text-sm flex items-center space-x-1.5 border border-gold-500/30 transition">
+                    <i class="fa-solid fa-file-csv text-base"></i>
+                    <span>Upload CSV</span>
+                </button>
+
+                <!-- Print Songbook Trigger -->
+                <button onclick="window.print()" class="p-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-300 hover:text-white border border-stage-700 transition" title="Print Songbook">
+                    <i class="fa-solid fa-print"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
+
+        <!-- Top Banner / Songbook Stats Card -->
+        <div class="no-print bg-gradient-to-r from-stage-900 via-stage-800 to-stage-900 rounded-2xl border border-stage-700/80 p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+            <!-- Vintage Mic Watermark -->
+            <div class="absolute -right-6 -bottom-8 opacity-5 pointer-events-none text-gold-400">
+                <i class="fa-solid fa-microphone-lines text-[180px]"></i>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-3">
+                        <span id="catalogTitle" class="text-xl sm:text-2xl font-serif font-bold text-white">Classic Karaoke Catalog</span>
+                        <span id="sourceBadge" class="text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2.5 py-0.5 rounded-full font-semibold">Demo Songs Loaded</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-400">All song numbers are formatted to <b>5 digits (e.g. 00001, 00452)</b>. Search works with both <b>padded ('00045')</b> or <b>plain numbers ('45')</b>.</p>
+                </div>
+
+                <!-- Song Count Badges -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-4 py-2.5 text-center min-w-[110px]">
+                        <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Songs</span>
+                        <span id="statTotalSongs" class="text-xl font-mono font-bold text-gold-400">0</span>
+                    </div>
+                    <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-4 py-2.5 text-center min-w-[110px]">
+                        <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Matching</span>
+                        <span id="statFilteredSongs" class="text-xl font-mono font-bold text-slate-100">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-4 sm:p-5 space-y-4 shadow-xl">
+            
+            <!-- Real-time Search Bar & Scope Filters -->
+            <div class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+                
+                <!-- Main Search Input -->
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" id="searchInput" oninput="handleSearchChange()" placeholder="Search title, artist, or song number (e.g., '00042' or '42')..." class="w-full pl-10 pr-10 py-3 bg-stage-950 border border-stage-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition text-sm sm:text-base font-medium">
+                    <button id="clearSearchBtn" onclick="clearSearchInput()" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-circle-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Scope Filter Buttons -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 font-medium text-xs">
+                    <span class="text-slate-400 mr-1 hidden sm:inline">Scope:</span>
+                    <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm">All</button>
+                    <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition">Title</button>
+                    <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition">Artist</button>
+                    <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition">Song #</button>
+                </div>
+            </div>
+
+            <!-- Sorting & View Modes Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stage-700/60 text-xs sm:text-sm">
+                
+                <!-- Sort Dropdown -->
+                <div class="flex items-center space-x-2">
+                    <label for="sortOption" class="text-slate-400 font-semibold"><i class="fa-solid fa-arrow-down-short-wide text-gold-400 mr-1"></i>Sort:</label>
+                    <select id="sortOption" onchange="handleSortChange()" class="bg-stage-950 border border-stage-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-gold-500 font-medium">
+                        <option value="num-asc">Song # (00001 &rarr; 99999)</option>
+                        <option value="num-desc">Song # (99999 &rarr; 00001)</option>
+                        <option value="title-asc">Title (A &rarr; Z)</option>
+                        <option value="title-desc">Title (Z &rarr; A)</option>
+                        <option value="artist-asc">Artist (A &rarr; Z)</option>
+                        <option value="artist-desc">Artist (Z &rarr; A)</option>
+                    </select>
+                </div>
+
+                <!-- View Mode Buttons -->
+                <div class="flex items-center space-x-1 bg-stage-950 p-1 rounded-lg border border-stage-700">
+                    <button onclick="setViewMode('grid')" id="view-btn-grid" title="Grid Cards" class="p-1.5 rounded-md text-gold-400 bg-stage-800 transition">
+                        <i class="fa-solid fa-border-all text-sm w-5 h-5 flex items-center justify-center"></i>
+                    </button>
+                    <button onclick="setViewMode('list')" id="view-btn-list" title="Compact Table List" class="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">
+                        <i class="fa-solid fa-list-ul text-sm w-5 h-5 flex items-center justify-center"></i>
+                    </button>
+                    <button onclick="setViewMode('binder')" id="view-btn-binder" title="Vintage Vinyl Binder" class="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">
+                        <i class="fa-solid fa-book-open text-sm w-5 h-5 flex items-center justify-center"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="no-print bg-stage-900/60 rounded-xl border border-stage-700/60 p-2 overflow-x-auto">
+            <div id="alphabetBar" class="flex items-center justify-between gap-1 min-w-max text-xs font-semibold font-mono">
+                <!-- Dynamically populated via JavaScript -->
+            </div>
+        </div>
+
+        <div id="songsContainer" class="min-h-[350px]">
+            <!-- Dynamic Song Cards / Rows / Binder View inserted here -->
+        </div>
+
+        <div id="paginationBar" class="no-print flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-stage-800 text-xs sm:text-sm text-slate-400">
+            <div class="flex items-center space-x-2">
+                <span>Show per page:</span>
+                <select id="pageSizeSelect" onchange="handlePageSizeChange()" class="bg-stage-900 border border-stage-700 rounded-lg px-2.5 py-1 text-slate-200 font-mono">
+                    <option value="24">24</option>
+                    <option value="48" selected>48</option>
+                    <option value="96">96</option>
+                    <option value="200">200</option>
+                </select>
+                <span id="pageStatsText" class="ml-2 font-mono text-slate-400">Showing 0-0 of 0</span>
+            </div>
+
+            <div id="paginationControls" class="flex items-center space-x-1 font-mono">
+                <!-- Dynamic Page Buttons -->
+            </div>
+        </div>
+
+    </main>
+
+    <div id="uploadModal" class="no-print fixed inset-0 bg-stage-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4 transition-all duration-200">
+        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-5 gold-border-glow">
+            <button onclick="closeUploadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="space-y-1">
+                <h3 class="text-xl font-serif font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-arrow-up text-gold-400"></i>
+                    <span>Upload Songbook CSV</span>
+                </h3>
+                <p class="text-xs text-slate-400">Upload a `.csv` file containing song headers: <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">No</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Title</code>, <code class="text-amber-300 font-mono bg-stage-950 px-1 rounded">Artist</code> (and <code class="text-slate-500 font-mono bg-stage-950 px-1 rounded">PDF Page</code> which is ignored).</p>
+            </div>
+
+            <!-- Drag and Drop Dropzone -->
+            <div id="dragDropArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)" onclick="document.getElementById('csvFileInput').click()" class="border-2 border-dashed border-stage-700 hover:border-gold-500 bg-stage-950/70 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group">
+                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(event)" class="hidden">
+                <div class="space-y-3">
+                    <div class="w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-200">Click to choose or drop CSV file here</p>
+                        <p class="text-xs text-slate-500 mt-1 font-mono">Numbers auto-pad to 5 digits (e.g. 1 &rarr; 00001)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-stage-800">
+                <button onclick="downloadSampleCSV()" class="text-xs text-gold-400 hover:text-gold-300 font-semibold flex items-center space-x-1.5 underline">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download Sample Template CSV</span>
+                </button>
+                <button onclick="closeUploadModal()" class="px-4 py-2 bg-stage-800 hover:bg-stage-700 text-slate-300 text-xs font-semibold rounded-lg">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="songDetailModal" class="no-print fixed inset-0 bg-stage-950/85 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-5 gold-border-glow overflow-hidden">
+            <!-- Background Record Accent -->
+            <div class="absolute -right-10 -top-10 opacity-10 pointer-events-none text-gold-400">
+                <i class="fa-solid fa-record-vinyl text-[160px]"></i>
+            </div>
+
+            <button onclick="closeSongModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Song Info Card Header -->
+            <div class="flex items-start gap-4 pr-6">
+                <div class="bg-gradient-to-br from-gold-300 via-gold-500 to-amber-700 text-slate-950 font-mono font-bold text-xl sm:text-2xl px-3.5 py-3 rounded-xl shadow-lg border border-gold-300 min-w-[90px] text-center">
+                    <span id="modalSongNum">00001</span>
+                </div>
+                <div class="flex-grow min-w-0">
+                    <h2 id="modalSongTitle" class="text-xl font-bold text-white leading-tight truncate">Song Title</h2>
+                    <p id="modalSongArtist" class="text-sm font-semibold text-gold-400 mt-1 truncate">Artist Name</p>
+                </div>
+            </div>
+
+            <!-- Pitch Reference Synthesizer (Web Audio API) -->
+            <div class="bg-stage-950/90 rounded-xl p-4 border border-stage-700/80 space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <span><i class="fa-solid fa-tuning-fork text-gold-400 mr-1.5"></i>Vocal Pitch Pipe Helper</span>
+                    <span class="text-gold-500 text-[10px] font-mono">Synth Pitch</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1 pt-1 font-mono">
+                    <button onclick="playPitchNote(261.63, 'C')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">C</button>
+                    <button onclick="playPitchNote(293.66, 'D')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">D</button>
+                    <button onclick="playPitchNote(329.63, 'E')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">E</button>
+                    <button onclick="playPitchNote(349.23, 'F')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">F</button>
+                    <button onclick="playPitchNote(392.00, 'G')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">G</button>
+                    <button onclick="playPitchNote(440.00, 'A')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">A</button>
+                    <button onclick="playPitchNote(493.88, 'B')" class="bg-stage-800 hover:bg-gold-500 hover:text-slate-950 py-2 rounded text-xs font-bold text-slate-200 border border-stage-700 transition">B</button>
+                </div>
+            </div>
+
+            <!-- Singer Request Notes Pad -->
+            <div class="space-y-1.5">
+                <label for="modalSongNotes" class="text-xs font-semibold text-slate-400 flex items-center justify-between">
+                    <span>Singer Key / Performance Notes:</span>
+                    <span class="text-[10px] text-slate-500">Auto-saved</span>
+                </label>
+                <textarea id="modalSongNotes" oninput="saveSongNotes()" placeholder="e.g. Sung in Key of G, duet with Sarah..." class="w-full bg-stage-950 border border-stage-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-gold-500 h-20 resize-none font-sans"></textarea>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-between gap-3 pt-2">
+                <button id="modalFavToggleBtn" onclick="toggleModalFav()" class="flex-1 py-2.5 px-4 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-200 font-semibold text-xs flex items-center justify-center space-x-2 border border-stage-700 transition">
+                    <i class="fa-solid fa-star text-amber-400"></i>
+                    <span id="modalFavText">Favorite</span>
+                </button>
+
+                <button onclick="copySongCode()" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg transition">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Copy Song Code</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="no-print fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        // Core Application State
+        let songbookSongs = [];
+        let filteredSongs = [];
+        let favoriteIds = new Set(JSON.parse(localStorage.getItem('songbook_fav_ids') || '[]'));
+        let songNotesMap = JSON.parse(localStorage.getItem('songbook_notes') || '{}');
+        
+        let currentSearchQuery = '';
+        let currentScope = 'all'; // 'all', 'title', 'artist', 'number'
+        let currentLetter = 'ALL';
+        let currentSort = 'num-asc';
+        let viewMode = 'grid'; // 'grid', 'list', 'binder'
+        let showFavsOnly = false;
+        
+        let currentPage = 1;
+        let pageSize = 48;
+        let activeSongObj = null;
+
+        // Web Audio Synthesizer Context
+        let audioContext = null;
+
+        // Rich Pre-loaded Default Classics Dataset (25+ iconic titles across genres)
+        const DEFAULT_SONGBOOK = [
+            { no: "1", title: "Bohemian Rhapsody", artist: "Queen" },
+            { no: "2", title: "Hotel California", artist: "Eagles" },
+            { no: "3", title: "Sweet Child O' Mine", artist: "Guns N' Roses" },
+            { no: "4", title: "Billie Jean", artist: "Michael Jackson" },
+            { no: "5", title: "Don't Stop Believin'", artist: "Journey" },
+            { no: "12", title: "Shape of You", artist: "Ed Sheeran" },
+            { no: "45", title: "Rolling in the Deep", artist: "Adele" },
+            { no: "88", title: "Wonderwall", artist: "Oasis" },
+            { no: "102", title: "Piano Man", artist: "Billy Joel" },
+            { no: "452", title: "Stairway to Heaven", artist: "Led Zeppelin" },
+            { no: "777", title: "Hallelujah", artist: "Jeff Buckley" },
+            { no: "1001", title: "Fly Me to the Moon", artist: "Frank Sinatra" },
+            { no: "1050", title: "Sweet Caroline", artist: "Neil Diamond" },
+            { no: "1200", title: "I Will Always Love You", artist: "Whitney Houston" },
+            { no: "2340", title: "Like a Rolling Stone", artist: "Bob Dylan" },
+            { no: "3100", title: "Smells Like Teen Spirit", artist: "Nirvana" },
+            { no: "4500", title: "Thinking Out Loud", artist: "Ed Sheeran" },
+            { no: "5210", title: "Careless Whisper", artist: "George Michael" },
+            { no: "6800", title: "September", artist: "Earth, Wind & Fire" },
+            { no: "7420", title: "Stand by Me", artist: "Ben E. King" },
+            { no: "8999", title: "Dancing Queen", artist: "ABBA" },
+            { no: "10450", title: "Livin' on a Prayer", artist: "Bon Jovi" },
+            { no: "12345", title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars" },
+            { no: "15000", title: "Shallow", artist: "Lady Gaga & Bradley Cooper" },
+            { no: "20100", title: "Can't Help Falling in Love", artist: "Elvis Presley" }
+        ];
+
+        /**
+         * Converts any song number into a padded 5-digit string.
+         * Examples: '1' -> '00001', '452' -> '00452', '12345' -> '12345'
+         */
+        function format5DigitNumber(val) {
+            if (val === undefined || val === null) return '00000';
+            const cleanStr = String(val).trim();
+            const parsedInt = parseInt(cleanStr, 10);
+            
+            if (!isNaN(parsedInt)) {
+                return String(parsedInt).padStart(5, '0');
+            }
+            return cleanStr.padStart(5, '0');
+        }
+
+        // Reads state variables directly from URL Query Parameters for persistence across refreshes
+        function readStateFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('q')) currentSearchQuery = params.get('q');
+            if (params.has('scope')) currentScope = params.get('scope');
+            if (params.has('letter')) currentLetter = params.get('letter');
+            if (params.has('sort')) currentSort = params.get('sort');
+            if (params.has('view')) viewMode = params.get('view');
+            if (params.has('favs')) showFavsOnly = params.get('favs') === '1';
+            if (params.has('page')) currentPage = parseInt(params.get('page'), 10) || 1;
+            if (params.has('size')) pageSize = parseInt(params.get('size'), 10) || 48;
+        }
+
+        // Synchronizes current active state to URL query string without reloading page
+        function updateUrlParams() {
+            const params = new URLSearchParams();
+            if (currentSearchQuery) params.set('q', currentSearchQuery);
+            if (currentScope !== 'all') params.set('scope', currentScope);
+            if (currentLetter !== 'ALL') params.set('letter', currentLetter);
+            if (currentSort !== 'num-asc') params.set('sort', currentSort);
+            if (viewMode !== 'grid') params.set('view', viewMode);
+            if (showFavsOnly) params.set('favs', '1');
+            if (currentPage > 1) params.set('page', currentPage);
+            if (pageSize !== 48) params.set('size', pageSize);
+
+            const newQuery = params.toString();
+            const newUrl = newQuery ? `${window.location.pathname}?${newQuery}` : window.location.pathname;
+            if (window.location.search !== (newQuery ? `?${newQuery}` : '')) {
+                window.history.replaceState({}, '', newUrl);
+            }
+        }
+
+        // Reflects current JS state onto UI elements (Inputs, Dropdowns, Scope buttons)
+        function syncUIWithState() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = currentSearchQuery;
+                document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearchQuery === '');
+            }
+            const sortSelect = document.getElementById('sortOption');
+            if (sortSelect) sortSelect.value = currentSort;
+
+            const pageSizeSelect = document.getElementById('pageSizeSelect');
+            if (pageSizeSelect) pageSizeSelect.value = pageSize;
+
+            setSearchScope(currentScope, false);
+            setLetterFilter(currentLetter, false);
+            setViewMode(viewMode, false);
+            updateFavsBtnUI();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            readStateFromUrl();
+            renderAlphabetBar();
+            syncUIWithState();
+            loadStoredOrDemoSongs();
+            updateFavsBadgeCount();
+
+            // Support Browser Back/Forward buttons
+            window.addEventListener('popstate', () => {
+                readStateFromUrl();
+                syncUIWithState();
+                applyFiltersAndRender();
+            });
+
+            // Keyboard shortcut Ctrl+F / Cmd+F to focus search
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('searchInput').focus();
+                }
+            });
+        });
+
+        function loadStoredOrDemoSongs() {
+            const saved = localStorage.getItem('songbook_songs_data');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        songbookSongs = processRawSongArray(parsed);
+                        document.getElementById('sourceBadge').innerText = "Loaded Saved CSV";
+                        document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+                        applyFiltersAndRender();
+                        return;
+                    }
+                } catch(e) {
+                    console.error("Error reading stored songs", e);
+                }
+            }
+            restoreDefaultDemoSongs(false);
+        }
+
+        function restoreDefaultDemoSongs(notify = true) {
+            songbookSongs = processRawSongArray(DEFAULT_SONGBOOK);
+            localStorage.setItem('songbook_songs_data', JSON.stringify(DEFAULT_SONGBOOK));
+            document.getElementById('sourceBadge').innerText = "Demo Songs Loaded";
+            document.getElementById('sourceBadge').className = "text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+            applyFiltersAndRender();
+            if (notify) {
+                showToast("Restored classic demo songbook!", "success");
+            }
+        }
+
+        function processRawSongArray(rawList) {
+            return rawList.map((item, index) => {
+                const rawNo = String(item.no || index + 1).trim();
+                const intNo = parseInt(rawNo, 10) || 0;
+                const formatted5Digit = format5DigitNumber(rawNo);
+
+                return {
+                    id: formatted5Digit, // Always 5 digits string e.g. "00045"
+                    rawNo: rawNo,         // E.g. "45"
+                    intNo: intNo,         // E.g. 45
+                    title: String(item.title || 'Untitled').trim(),
+                    artist: String(item.artist || 'Unknown Artist').trim()
+                };
+            });
+        }
+
+        function renderAlphabetBar() {
+            const letters = ['ALL', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+            const container = document.getElementById('alphabetBar');
+            container.innerHTML = letters.map(let => `
+                <button onclick="setLetterFilter('${let}')" id="let-${let}" class="px-2.5 py-1 rounded-md ${let === 'ALL' ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800'} transition">
+                    ${let}
+                </button>
+            `).join('');
+        }
+
+        function handleSearchChange() {
+            const input = document.getElementById('searchInput');
+            currentSearchQuery = input.value.trim().toLowerCase();
+            document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearchQuery === '');
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function clearSearchInput() {
+            document.getElementById('searchInput').value = '';
+            currentSearchQuery = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function setSearchScope(scope, triggerRender = true) {
+            currentScope = scope;
+            document.querySelectorAll('.scope-btn').forEach(b => {
+                b.className = "scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition";
+            });
+            const activeBtn = document.getElementById(`scope-${scope}`);
+            if (activeBtn) {
+                activeBtn.className = "scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm";
+            }
+            if (triggerRender) {
+                currentPage = 1;
+                applyFiltersAndRender();
+            }
+        }
+
+        function setLetterFilter(letter, triggerRender = true) {
+            currentLetter = letter;
+            const letters = ['ALL', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+            letters.forEach(let => {
+                const b = document.getElementById(`let-${let}`);
+                if (b) {
+                    if (let === letter) {
+                        b.className = "px-2.5 py-1 rounded-md bg-gold-500 text-slate-950 font-bold transition";
+                    } else {
+                        b.className = "px-2.5 py-1 rounded-md bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800 transition";
+                    }
+                }
+            });
+            if (triggerRender) {
+                currentPage = 1;
+                applyFiltersAndRender();
+            }
+        }
+
+        function handleSortChange() {
+            currentSort = document.getElementById('sortOption').value;
+            applyFiltersAndRender();
+        }
+
+        function toggleFavoritesOnly() {
+            showFavsOnly = !showFavsOnly;
+            updateFavsBtnUI();
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function updateFavsBtnUI() {
+            const btn = document.getElementById('favsToggleBtn');
+            if (!btn) return;
+            if (showFavsOnly) {
+                btn.classList.add('bg-amber-500/20', 'border-amber-500/50', 'text-amber-400');
+            } else {
+                btn.classList.remove('bg-amber-500/20', 'border-amber-500/50', 'text-amber-400');
+            }
+        }
+
+        function applyFiltersAndRender() {
+            const q = currentSearchQuery;
+            const qAsInt = parseInt(q, 10);
+            const isQueryNumeric = !isNaN(qAsInt) && /^\d+$/.test(q);
+
+            filteredSongs = songbookSongs.filter(song => {
+                // Search matching
+                let matchesSearch = true;
+                if (q) {
+                    // Check song number match:
+                    // 1. 5-digit formatted string e.g. "00045"
+                    // 2. original raw string e.g. "45"
+                    // 3. exact integer match e.g. 45
+                    const numMatch = song.id.includes(q) || 
+                                     song.rawNo.toLowerCase().includes(q) || 
+                                     (isQueryNumeric && song.intNo === qAsInt);
+
+                    const titleMatch = song.title.toLowerCase().includes(q);
+                    const artistMatch = song.artist.toLowerCase().includes(q);
+
+                    if (currentScope === 'title') {
+                        matchesSearch = titleMatch;
+                    } else if (currentScope === 'artist') {
+                        matchesSearch = artistMatch;
+                    } else if (currentScope === 'number') {
+                        matchesSearch = numMatch;
+                    } else {
+                        matchesSearch = titleMatch || artistMatch || numMatch;
+                    }
+                }
+
+                // Letter matching
+                let matchesLetter = true;
+                if (currentLetter !== 'ALL') {
+                    const first = song.title.trim().charAt(0).toUpperCase();
+                    if (currentLetter === '#') {
+                        matchesLetter = !/[A-Z]/.test(first);
+                    } else {
+                        matchesLetter = first === currentLetter;
+                    }
+                }
+
+                // Favorites matching
+                let matchesFavs = true;
+                if (showFavsOnly) {
+                    matchesFavs = favoriteIds.has(song.id);
+                }
+
+                return matchesSearch && matchesLetter && matchesFavs;
+            });
+
+            // Sorting logic
+            filteredSongs.sort((a, b) => {
+                switch (currentSort) {
+                    case 'num-asc':
+                        return a.intNo - b.intNo || a.id.localeCompare(b.id);
+                    case 'num-desc':
+                        return b.intNo - a.intNo || b.id.localeCompare(a.id);
+                    case 'title-asc':
+                        return a.title.localeCompare(b.title);
+                    case 'title-desc':
+                        return b.title.localeCompare(a.title);
+                    case 'artist-asc':
+                        return a.artist.localeCompare(b.artist);
+                    case 'artist-desc':
+                        return b.artist.localeCompare(a.artist);
+                    default:
+                        return 0;
+                }
+            });
+
+            // Update stats
+            document.getElementById('statTotalSongs').innerText = songbookSongs.length;
+            document.getElementById('statFilteredSongs').innerText = filteredSongs.length;
+
+            renderSongsDisplay();
+        }
+
+        function setViewMode(mode, triggerRender = true) {
+            viewMode = mode;
+            ['grid', 'list', 'binder'].forEach(m => {
+                const btn = document.getElementById(`view-btn-${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.className = "p-1.5 rounded-md text-gold-400 bg-stage-800 transition";
+                    } else {
+                        btn.className = "p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition";
+                    }
+                }
+            });
+            if (triggerRender) {
+                renderSongsDisplay();
+            }
+        }
+
+        function renderSongsDisplay() {
+            updateUrlParams();
+            const container = document.getElementById('songsContainer');
+
+            if (filteredSongs.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-stage-900/40 border border-stage-700/60 rounded-2xl p-12 text-center space-y-3">
+                        <div class="w-16 h-16 bg-stage-800 text-gold-400 rounded-full flex items-center justify-center mx-auto">
+                            <i class="fa-solid fa-compact-disc text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-200">No matching songs found</h3>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto">Try typing an exact song number like <b>00001</b> or <b>1</b>, or reset your active filters.</p>
+                        <button onclick="resetAllFilters()" class="mt-2 px-4 py-2 bg-stage-800 hover:bg-stage-700 text-gold-400 font-semibold text-xs rounded-xl border border-stage-700 transition">Reset All Filters</button>
+                    </div>
+                `;
+                renderPagination(0);
+                return;
+            }
+
+            // Pagination calculation
+            const totalPages = Math.ceil(filteredSongs.length / pageSize);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIdx = (currentPage - 1) * pageSize;
+            const pageSongs = filteredSongs.slice(startIdx, startIdx + pageSize);
+
+            if (viewMode === 'grid') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        ${pageSongs.map(song => renderGridCardHtml(song)).join('')}
+                    </div>
+                `;
+            } else if (viewMode === 'list') {
+                container.innerHTML = `
+                    <div class="bg-stage-900/90 border border-stage-700 rounded-2xl overflow-hidden divide-y divide-stage-800 shadow-xl">
+                        ${pageSongs.map(song => renderListItemHtml(song)).join('')}
+                    </div>
+                `;
+            } else if (viewMode === 'binder') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${pageSongs.map(song => renderBinderCardHtml(song)).join('')}
+                    </div>
+                `;
+            }
+
+            renderPagination(filteredSongs.length);
+        }
+
+        function renderGridCardHtml(song) {
+            const isFav = favoriteIds.has(song.id);
+            return `
+                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print bg-stage-900/90 hover:bg-stage-800/90 border border-stage-700 hover:border-gold-500/60 rounded-xl p-4 transition-all duration-200 cursor-pointer flex items-center space-x-3.5 group relative shadow-md gold-border-glow">
+                    <div class="bg-gradient-to-br from-gold-300 via-gold-500 to-amber-700 text-slate-950 font-mono font-bold text-base sm:text-lg px-2.5 py-2 rounded-lg flex items-center justify-center min-w-[70px] shadow-sm group-hover:scale-105 transition">
+                        ${song.id}
+                    </div>
+                    <div class="flex-grow min-w-0 pr-6">
+                        <h4 class="text-sm font-bold text-slate-100 truncate group-hover:text-gold-300 transition">${escapeHtml(song.title)}</h4>
+                        <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(song.artist)}</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print absolute top-3 right-3 text-slate-600 hover:text-amber-400 transition">
+                        <i class="fa-solid fa-star text-sm ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderListItemHtml(song) {
+            const isFav = favoriteIds.has(song.id);
+            return `
+                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print px-4 py-3 flex items-center justify-between hover:bg-stage-800/60 cursor-pointer transition group">
+                    <div class="flex items-center space-x-4 min-w-0">
+                        <span class="font-mono font-bold text-gold-400 text-sm bg-stage-950 border border-stage-700 px-3 py-1 rounded-md min-w-[75px] text-center">${song.id}</span>
+                        <div class="min-w-0">
+                            <span class="text-sm font-semibold text-slate-100 group-hover:text-gold-300 transition truncate block">${escapeHtml(song.title)}</span>
+                            <span class="text-xs text-slate-400 truncate block sm:inline">${escapeHtml(song.artist)}</span>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print p-1 text-slate-600 hover:text-amber-400 transition">
+                        <i class="fa-solid fa-star text-sm ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderBinderCardHtml(song) {
+            const isFav = favoriteIds.has(song.id);
+            return `
+                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print bg-gradient-to-r from-stage-900 to-stage-800 border-l-4 border-l-gold-500 border border-stage-700 rounded-r-xl p-4 cursor-pointer hover:bg-stage-800/80 transition flex items-center justify-between group">
+                    <div class="flex items-center space-x-4 min-w-0">
+                        <div class="text-center min-w-[70px]">
+                            <span class="block text-[9px] uppercase font-mono tracking-wider text-slate-500 font-bold">SONG CODE</span>
+                            <span class="text-lg font-mono font-bold text-gold-400">${song.id}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-base font-bold text-slate-100 group-hover:text-gold-300 transition truncate">${escapeHtml(song.title)}</h4>
+                            <p class="text-xs text-slate-400 mt-0.5 truncate">${escapeHtml(song.artist)}</p>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print p-2 text-slate-600 hover:text-amber-400 transition">
+                        <i class="fa-solid fa-star text-base ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function handlePageSizeChange() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
+            currentPage = 1;
+            renderSongsDisplay();
+        }
+
+        function renderPagination(totalCount) {
+            const statsText = document.getElementById('pageStatsText');
+            const container = document.getElementById('paginationControls');
+
+            if (totalCount === 0) {
+                statsText.innerText = `Showing 0 of 0`;
+                container.innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(totalCount / pageSize);
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, totalCount);
+
+            statsText.innerText = `Showing ${start}-${end} of ${totalCount}`;
+
+            let html = '';
+            
+            // Prev
+            html += `
+                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-2 py-1 rounded bg-stage-950 text-slate-600 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded bg-stage-800 hover:bg-stage-700 text-slate-300 transition"'}>
+                    &laquo;
+                </button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `
+                        <button onclick="goToPage(${i})" class="px-3 py-1 rounded text-xs font-semibold ${i === currentPage ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-800 hover:bg-stage-700 text-slate-300'} transition">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<span class="px-1 text-slate-600">...</span>`;
+                }
+            }
+
+            // Next
+            html += `
+                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="px-2 py-1 rounded bg-stage-950 text-slate-600 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded bg-stage-800 hover:bg-stage-700 text-slate-300 transition"'}>
+                    &raquo;
+                </button>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function goToPage(p) {
+            const totalPages = Math.ceil(filteredSongs.length / pageSize);
+            if (p >= 1 && p <= totalPages) {
+                currentPage = p;
+                renderSongsDisplay();
+                window.scrollTo({ top: 180, behavior: 'smooth' });
+            }
+        }
+
+        function openSongDetailModal(songId) {
+            const song = songbookSongs.find(s => s.id === songId);
+            if (!song) return;
+
+            activeSongObj = song;
+            document.getElementById('modalSongNum').innerText = song.id;
+            document.getElementById('modalSongTitle').innerText = song.title;
+            document.getElementById('modalSongArtist').innerText = song.artist;
+            
+            // Notes pad
+            document.getElementById('modalSongNotes').value = songNotesMap[song.id] || '';
+
+            updateModalFavState();
+
+            const modal = document.getElementById('songDetailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSongModal() {
+            const modal = document.getElementById('songDetailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activeSongObj = null;
+        }
+
+        function saveSongNotes() {
+            if (!activeSongObj) return;
+            const val = document.getElementById('modalSongNotes').value;
+            if (val.trim()) {
+                songNotesMap[activeSongObj.id] = val;
+            } else {
+                delete songNotesMap[activeSongObj.id];
+            }
+            localStorage.setItem('songbook_notes', JSON.stringify(songNotesMap));
+        }
+
+        function updateModalFavState() {
+            if (!activeSongObj) return;
+            const isFav = favoriteIds.has(activeSongObj.id);
+            const textEl = document.getElementById('modalFavText');
+            textEl.innerText = isFav ? 'In Favorites' : 'Add to Favorites';
+        }
+
+        function toggleModalFav() {
+            if (!activeSongObj) return;
+            toggleFavoriteId(activeSongObj.id);
+            updateModalFavState();
+        }
+
+        function toggleFavoriteId(songId) {
+            if (favoriteIds.has(songId)) {
+                favoriteIds.delete(songId);
+                showToast(`Removed #${songId} from favorites.`, "info");
+            } else {
+                favoriteIds.add(songId);
+                showToast(`Added #${songId} to favorites!`, "success");
+            }
+            localStorage.setItem('songbook_fav_ids', JSON.stringify([...favoriteIds]));
+            updateFavsBadgeCount();
+            applyFiltersAndRender();
+        }
+
+        function updateFavsBadgeCount() {
+            document.getElementById('favsCountBadge').innerText = favoriteIds.size;
+        }
+
+        function copySongCode() {
+            if (!activeSongObj) return;
+            const textToCopy = `${activeSongObj.id} - ${activeSongObj.title} (${activeSongObj.artist})`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy);
+            } else {
+                const textarea = document.createElement("textarea");
+                document.body.appendChild(textarea);
+                textarea.value = textToCopy;
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+            }
+            showToast(`Copied "${textToCopy}" to clipboard!`, "success");
+        }
+
+        function playPitchNote(freq, noteLabel) {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+
+                gain.gain.setValueAtTime(0.25, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 1.2);
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc.start();
+                osc.stop(audioContext.currentTime + 1.2);
+
+                showToast(`Playing Reference Pitch: Note ${noteLabel}`, "info");
+            } catch (err) {
+                console.error("Audio synth error", err);
+            }
+        }
+
+        function openUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('dragDropArea').classList.add('border-gold-500', 'bg-stage-900');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            document.getElementById('dragDropArea').classList.remove('border-gold-500', 'bg-stage-900');
+        }
+
+        function handleDropFile(e) {
+            e.preventDefault();
+            handleDragLeave(e);
+            if (e.dataTransfer.files.length) {
+                processCSVFile(e.dataTransfer.files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                processCSVFile(e.target.files[0]);
+            }
+        }
+
+        function parseCSVText(text) {
+            const lines = [];
+            let currentRow = [];
+            let currentVal = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentVal += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentVal.trim());
+                    currentVal = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') {
+                        i++;
+                    }
+                    currentRow.push(currentVal.trim());
+                    if (currentRow.some(cell => cell.length > 0)) {
+                        lines.push(currentRow);
+                    }
+                    currentRow = [];
+                    currentVal = '';
+                } else {
+                    currentVal += char;
+                }
+            }
+            if (currentVal || currentRow.length > 0) {
+                currentRow.push(currentVal.trim());
+                if (currentRow.some(cell => cell.length > 0)) {
+                    lines.push(currentRow);
+                }
+            }
+            if (lines.length === 0) return [];
+
+            const headers = lines[0].map(h => h.trim().toLowerCase());
+            const data = [];
+
+            for (let r = 1; r < lines.length; r++) {
+                const row = lines[r];
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    obj[h] = row[idx] !== undefined ? row[idx] : '';
+                });
+                data.push(obj);
+            }
+            return data;
+        }
+
+        function processCSVFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv') && !file.type.includes('csv') && !file.type.includes('text')) {
+                showToast("Please upload a valid CSV file.", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const fileText = e.target.result;
+                    let parsedData = [];
+
+                    if (typeof Papa !== 'undefined' && Papa.parse) {
+                        const results = Papa.parse(fileText, {
+                            header: true,
+                            skipEmptyLines: true,
+                            transformHeader: (h) => h.trim().toLowerCase()
+                        });
+                        parsedData = results.data || [];
+                    } else {
+                        parsedData = parseCSVText(fileText);
+                    }
+
+                    if (!parsedData || parsedData.length === 0) {
+                        showToast("No valid rows found in CSV.", "error");
+                        return;
+                    }
+
+                    const parsedSongs = [];
+                    parsedData.forEach((row, i) => {
+                        const keys = Object.keys(row);
+                        
+                        const noKey = keys.find(k => k.includes('no') || k.includes('num') || k.includes('#') || k.includes('code'));
+                        const titleKey = keys.find(k => k.includes('title') || k.includes('song') || k.includes('name'));
+                        const artistKey = keys.find(k => k.includes('artist') || k.includes('singer') || k.includes('band'));
+
+                        const noVal = noKey ? row[noKey] : String(i + 1);
+                        const titleVal = titleKey ? row[titleKey] : 'Untitled';
+                        const artistVal = artistKey ? row[artistKey] : 'Unknown Artist';
+
+                        if (titleVal || noVal) {
+                            parsedSongs.push({
+                                no: String(noVal).trim(),
+                                title: String(titleVal).trim(),
+                                artist: String(artistVal).trim()
+                            });
+                        }
+                    });
+
+                    if (parsedSongs.length === 0) {
+                        showToast("No valid songs found in CSV.", "error");
+                        return;
+                    }
+
+                    songbookSongs = processRawSongArray(parsedSongs);
+                    localStorage.setItem('songbook_songs_data', JSON.stringify(parsedSongs));
+
+                    closeUploadModal();
+                    
+                    document.getElementById('catalogTitle').innerText = file.name.replace(/\.csv$/i, '');
+                    document.getElementById('sourceBadge').innerText = "Custom CSV Loaded";
+                    document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+
+                    applyFiltersAndRender();
+                    showToast(`Loaded ${parsedSongs.length} songs formatted to 5 digits!`, "success");
+                } catch(err) {
+                    showToast("Error processing CSV: " + err.message, "error");
+                }
+            };
+            reader.onerror = function() {
+                showToast("Failed to read CSV file.", "error");
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadSampleCSV() {
+            const csvText = "No,Title,Artist,PDF Page\n"
+                + "1,Bohemian Rhapsody,Queen,1\n"
+                + "45,Rolling in the Deep,Adele,5\n"
+                + "452,Stairway to Heaven,Led Zeppelin,12\n"
+                + "12345,Uptown Funk,Bruno Mars,30\n";
+
+            const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'songbook_template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Sample CSV template downloaded!", "info");
+        }
+
+        function resetAllFilters() {
+            clearSearchInput();
+            setSearchScope('all', false);
+            setLetterFilter('ALL', false);
+            showFavsOnly = false;
+            updateFavsBtnUI();
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function showToast(msg, type = "info") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            const bgClass = type === 'success' ? 'bg-emerald-950/90 border-emerald-500 text-emerald-300' 
+                          : type === 'error' ? 'bg-rose-950/90 border-rose-500 text-rose-300' 
+                          : 'bg-stage-900/95 border-gold-500 text-gold-300';
+
+            toast.className = `px-4 py-3 rounded-xl border ${bgClass} backdrop-blur-md shadow-xl text-xs sm:text-sm font-medium flex items-center space-x-2 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
+            toast.innerHTML = `
+                <i class="fa-solid fa-circle-info text-base"></i>
+                <span>${escapeHtml(msg)}</span>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
