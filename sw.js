@@ -1,5 +1,5 @@
 /* Service worker: offline-first for the app shell + third-party libs/fonts */
-const VERSION = 'v1';
+const VERSION = 'v3';
 const CACHE = 'songbook-' + VERSION;
 
 const SHELL = [

@@ -116,6 +116,47 @@
             animation: spin-slow 20s linear infinite;
         }
 
+        /* ===== iOS safe areas (notch, Dynamic Island, home indicator) ===== */
+        html {
+            background: #07090e;               /* matches status bar / overscroll */
+            -webkit-text-size-adjust: 100%;
+        }
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;                 /* iOS Safari: 100vh ignores the toolbar */
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        /* Sticky header: sits below the status bar / notch, still spans full width */
+        header.sticky {
+            padding-top: env(safe-area-inset-top, 0px);
+            margin-left: calc(env(safe-area-inset-left, 0px) * -1);
+            margin-right: calc(env(safe-area-inset-right, 0px) * -1);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+        }
+        /* Modals: keep content clear of notch + home indicator */
+        #uploadModal, #songDetailModal {
+            padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+            padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+            padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+        }
+        #uploadModal > div, #songDetailModal > div {
+            max-height: 90vh;
+            max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        }
+        /* Toasts above the home indicator */
+        #toastContainer {
+            bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+            right: calc(1.25rem + env(safe-area-inset-right, 0px));
+        }
+        /* iOS zooms the page when focusing inputs under 16px */
+        @supports (-webkit-touch-callout: none) {
+            input, textarea, select { font-size: 16px !important; }
+        }
+
         /* Print Media Styles for physical songbook export */
         @media print {
             body {
@@ -471,7 +512,10 @@
         let currentSearchQuery = '';
         let currentScope = 'all'; // 'all', 'title', 'artist', 'number'
         let currentLetter = 'ALL';
-        let currentSort = 'num-asc';
+        const DEFAULT_SORT = 'title-asc';
+        let currentSort = DEFAULT_SORT;
+        // Shared collator: much faster than localeCompare when sorting ~48k songs
+        const sortCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
         let viewMode = 'grid'; // 'grid', 'list', 'binder'
         let showFavsOnly = false;
         
@@ -521,7 +565,7 @@
             if (currentSearchQuery) params.set('q', currentSearchQuery);
             if (currentScope !== 'all') params.set('scope', currentScope);
             if (currentLetter !== 'ALL') params.set('letter', currentLetter);
-            if (currentSort !== 'num-asc') params.set('sort', currentSort);
+            if (currentSort !== DEFAULT_SORT) params.set('sort', currentSort);
             if (viewMode !== 'grid') params.set('view', viewMode);
             if (showFavsOnly) params.set('favs', '1');
             if (currentPage > 1) params.set('page', currentPage);
@@ -759,13 +803,13 @@
                     case 'num-desc':
                         return b.intNo - a.intNo || b.id.localeCompare(a.id);
                     case 'title-asc':
-                        return a.title.localeCompare(b.title);
+                        return sortCollator.compare(a.title, b.title);
                     case 'title-desc':
-                        return b.title.localeCompare(a.title);
+                        return sortCollator.compare(b.title, a.title);
                     case 'artist-asc':
-                        return a.artist.localeCompare(b.artist);
+                        return sortCollator.compare(a.artist, b.artist);
                     case 'artist-desc':
-                        return b.artist.localeCompare(a.artist);
+                        return sortCollator.compare(b.artist, a.artist);
                     default:
                         return 0;
                 }
