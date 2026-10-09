@@ -308,14 +308,15 @@
             </div>
 
             <!-- Drag and Drop Dropzone -->
-            <div id="dragDropArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)" onclick="document.getElementById('csvFileInput').click()" class="border-2 border-dashed border-stage-700 hover:border-gold-500 bg-stage-950/70 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group">
-                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(event)" class="hidden">
-                <div class="space-y-3">
+            <div id="dragDropArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)" class="relative border-2 border-dashed border-stage-700 hover:border-gold-500 bg-stage-950/70 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group overflow-hidden">
+                <!-- Native file input overlaid directly for 100% reliable iOS Safari touch interaction -->
+                <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain,application/vnd.ms-excel,.txt,text/*,application/csv" onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <div class="space-y-3 pointer-events-none">
                     <div class="w-14 h-14 bg-stage-800 rounded-full flex items-center justify-center mx-auto text-gold-400 group-hover:scale-110 transition">
                         <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-slate-200">Click to choose or drop CSV file here</p>
+                        <p class="text-sm font-semibold text-slate-200">Tap or click to choose CSV file</p>
                         <p class="text-xs text-slate-500 mt-1 font-mono">Numbers auto-pad to 5 digits (e.g. 1 &rarr; 00001)</p>
                     </div>
                 </div>
@@ -1176,8 +1177,15 @@
         }
 
         function processCSVFile(file) {
-            if (!file.name.toLowerCase().endsWith('.csv') && !file.type.includes('csv') && !file.type.includes('text')) {
-                showToast("Please upload a valid CSV file.", "error");
+            if (!file) return;
+
+            // iOS Safari & Mobile compatibility: file.type is frequently empty string or generic octet-stream on iOS Files app
+            const fileNameLower = file.name ? file.name.toLowerCase() : '';
+            const isCsvExt = fileNameLower.endsWith('.csv') || fileNameLower.endsWith('.txt') || fileNameLower.endsWith('.tsv') || fileNameLower.endsWith('.dat');
+            const isCsvType = !file.type || file.type.includes('csv') || file.type.includes('text') || file.type.includes('excel') || file.type === 'application/octet-stream';
+
+            if (!isCsvExt && !isCsvType) {
+                showToast("Please upload a valid CSV or text file.", "error");
                 return;
             }
 
@@ -1234,7 +1242,7 @@
 
                     closeUploadModal();
                     
-                    document.getElementById('catalogTitle').innerText = file.name.replace(/\.csv$/i, '');
+                    document.getElementById('catalogTitle').innerText = file.name ? file.name.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
                     document.getElementById('sourceBadge').innerText = "Custom CSV Loaded";
                     document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
 
@@ -1242,6 +1250,10 @@
                     showToast(`Loaded ${parsedSongs.length} songs formatted to 5 digits!`, "success");
                 } catch(err) {
                     showToast("Error processing CSV: " + err.message, "error");
+                } finally {
+                    // Reset input value so selecting the same file again triggers onchange
+                    const inputEl = document.getElementById('csvFileInput');
+                    if (inputEl) inputEl.value = '';
                 }
             };
             reader.onerror = function() {
