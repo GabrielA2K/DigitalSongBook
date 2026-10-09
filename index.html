@@ -70,6 +70,20 @@
             background: #ca8a04;
         }
 
+        /* Hide scrollbars for clean touch horizontal scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Tap highlight prevention for smooth native touch feel */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         /* Gold gradient typography & glow effects */
         .gold-gradient-text {
             background: linear-gradient(135deg, #fef08a 0%, #facc15 50%, #a16207 100%);
@@ -117,115 +131,115 @@
 <body class="bg-stage-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-gold-500 selection:text-slate-950">
 
     <header class="no-print border-b border-stage-700/80 bg-stage-900/90 backdrop-blur-md sticky top-0 z-40 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
             
             <!-- Logo & Brand Header -->
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetAllFilters()">
-                <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-gold-300 via-gold-500 to-amber-800 p-0.5 shadow-lg gold-border-glow flex-shrink-0">
+            <div class="flex items-center space-x-2 sm:space-x-3 cursor-pointer min-w-0" onclick="resetAllFilters()">
+                <div class="relative w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gold-300 via-gold-500 to-amber-800 p-0.5 shadow-lg gold-border-glow flex-shrink-0">
                     <div class="w-full h-full bg-stage-950 rounded-[10px] flex items-center justify-center relative overflow-hidden">
-                        <i class="fa-solid fa-record-vinyl text-gold-400 text-2xl animate-spin-slow"></i>
+                        <i class="fa-solid fa-record-vinyl text-gold-400 text-lg sm:text-2xl animate-spin-slow"></i>
                     </div>
                 </div>
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-serif font-black tracking-wider gold-gradient-text uppercase">Songbook</h1>
-                    <p class="text-[11px] text-slate-400 font-mono tracking-widest uppercase">5-Digit Digital Binder</p>
+                <div class="truncate">
+                    <h1 class="text-base sm:text-2xl font-serif font-black tracking-wider gold-gradient-text uppercase leading-none">Songbook</h1>
+                    <p class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">5-Digit Binder</p>
                 </div>
             </div>
 
             <!-- Header Quick Controls -->
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
                 <!-- Favorites Filter Button -->
-                <button id="favsToggleBtn" onclick="toggleFavoritesOnly()" class="px-3 py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-xs sm:text-sm font-semibold border border-stage-700/80 flex items-center space-x-2 transition text-slate-300">
-                    <i class="fa-solid fa-star text-amber-400"></i>
-                    <span class="hidden sm:inline">Favorites</span>
-                    <span id="favsCountBadge" class="bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-mono font-bold">0</span>
+                <button id="favsToggleBtn" onclick="toggleFavoritesOnly()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-xs sm:text-sm font-semibold border border-stage-700/80 flex items-center space-x-1.5 sm:space-x-2 transition text-slate-300">
+                    <i class="fa-solid fa-star text-amber-400 text-xs sm:text-sm"></i>
+                    <span class="hidden md:inline">Favorites</span>
+                    <span id="favsCountBadge" class="bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold">0</span>
                 </button>
 
                 <!-- Load Sample Demo Songs -->
-                <button onclick="restoreDefaultDemoSongs()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center space-x-1.5 shadow-md shadow-amber-950/40 transition">
-                    <i class="fa-solid fa-music"></i>
+                <button onclick="restoreDefaultDemoSongs()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center space-x-1 sm:space-x-1.5 shadow-md shadow-amber-950/40 transition">
+                    <i class="fa-solid fa-music text-xs sm:text-sm"></i>
                     <span class="hidden sm:inline">Demo Songs</span>
                 </button>
 
                 <!-- CSV Import Modal Button -->
-                <button onclick="openUploadModal()" class="px-3 py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 font-semibold text-xs sm:text-sm flex items-center space-x-1.5 border border-gold-500/30 transition">
-                    <i class="fa-solid fa-file-csv text-base"></i>
-                    <span>Upload CSV</span>
+                <button onclick="openUploadModal()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 font-semibold text-xs sm:text-sm flex items-center space-x-1 sm:space-x-1.5 border border-gold-500/30 transition">
+                    <i class="fa-solid fa-file-csv text-sm sm:text-base"></i>
+                    <span class="hidden xs:inline sm:inline">CSV</span>
                 </button>
 
                 <!-- Print Songbook Trigger -->
-                <button onclick="window.print()" class="p-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-300 hover:text-white border border-stage-700 transition" title="Print Songbook">
-                    <i class="fa-solid fa-print"></i>
+                <button onclick="window.print()" class="p-1.5 sm:p-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-300 hover:text-white border border-stage-700 transition" title="Print Songbook">
+                    <i class="fa-solid fa-print text-xs sm:text-sm"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full space-y-4 sm:space-y-6">
 
         <!-- Top Banner / Songbook Stats Card -->
-        <div class="no-print bg-gradient-to-r from-stage-900 via-stage-800 to-stage-900 rounded-2xl border border-stage-700/80 p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+        <div class="no-print bg-gradient-to-r from-stage-900 via-stage-800 to-stage-900 rounded-2xl border border-stage-700/80 p-4 sm:p-6 shadow-2xl relative overflow-hidden">
             <!-- Vintage Mic Watermark -->
             <div class="absolute -right-6 -bottom-8 opacity-5 pointer-events-none text-gold-400">
-                <i class="fa-solid fa-microphone-lines text-[180px]"></i>
+                <i class="fa-solid fa-microphone-lines text-[120px] sm:text-[180px]"></i>
             </div>
 
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
                 <div class="space-y-1">
-                    <div class="flex items-center space-x-3">
-                        <span id="catalogTitle" class="text-xl sm:text-2xl font-serif font-bold text-white">Classic Karaoke Catalog</span>
-                        <span id="sourceBadge" class="text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2.5 py-0.5 rounded-full font-semibold">Demo Songs Loaded</span>
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span id="catalogTitle" class="text-lg sm:text-2xl font-serif font-bold text-white">Classic Karaoke Catalog</span>
+                        <span id="sourceBadge" class="text-[10px] sm:text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 sm:px-2.5 py-0.5 rounded-full font-semibold">Demo Songs Loaded</span>
                     </div>
-                    <p class="text-xs sm:text-sm text-slate-400">All song numbers are formatted to <b>5 digits (e.g. 00001, 00452)</b>. Search works with both <b>padded ('00045')</b> or <b>plain numbers ('45')</b>.</p>
+                    <p class="text-[11px] sm:text-sm text-slate-400">All song numbers are formatted to <b>5 digits (e.g. 00001, 00452)</b>. Search works with both <b>padded ('00045')</b> or <b>plain numbers ('45')</b>.</p>
                 </div>
 
                 <!-- Song Count Badges -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-4 py-2.5 text-center min-w-[110px]">
-                        <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Songs</span>
-                        <span id="statTotalSongs" class="text-xl font-mono font-bold text-gold-400">0</span>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex-1 sm:flex-initial bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[110px]">
+                        <span class="block text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Songs</span>
+                        <span id="statTotalSongs" class="text-lg sm:text-xl font-mono font-bold text-gold-400">0</span>
                     </div>
-                    <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-4 py-2.5 text-center min-w-[110px]">
-                        <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold">Matching</span>
-                        <span id="statFilteredSongs" class="text-xl font-mono font-bold text-slate-100">0</span>
+                    <div class="flex-1 sm:flex-initial bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[110px]">
+                        <span class="block text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-bold">Matching</span>
+                        <span id="statFilteredSongs" class="text-lg sm:text-xl font-mono font-bold text-slate-100">0</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-4 sm:p-5 space-y-4 shadow-xl">
+        <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-3.5 sm:p-5 space-y-3 sm:space-y-4 shadow-xl">
             
             <!-- Real-time Search Bar & Scope Filters -->
-            <div class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+            <div class="flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch lg:items-center justify-between">
                 
                 <!-- Main Search Input -->
                 <div class="relative flex-grow">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <i class="fa-solid fa-magnifying-glass text-sm sm:text-base"></i>
                     </div>
-                    <input type="text" id="searchInput" oninput="handleSearchChange()" placeholder="Search title, artist, or song number (e.g., '00042' or '42')..." class="w-full pl-10 pr-10 py-3 bg-stage-950 border border-stage-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition text-sm sm:text-base font-medium">
-                    <button id="clearSearchBtn" onclick="clearSearchInput()" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white transition">
-                        <i class="fa-solid fa-circle-xmark text-base"></i>
+                    <input type="text" id="searchInput" oninput="handleSearchChange()" placeholder="Search title, artist, or song number (e.g., '00042' or '42')..." class="w-full pl-10 pr-10 py-2.5 sm:py-3 bg-stage-950 border border-stage-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition text-sm sm:text-base font-medium">
+                    <button id="clearSearchBtn" onclick="clearSearchInput()" class="hidden absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-white transition p-2">
+                        <i class="fa-solid fa-circle-xmark text-sm sm:text-base"></i>
                     </button>
                 </div>
 
                 <!-- Scope Filter Buttons -->
-                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 font-medium text-xs">
-                    <span class="text-slate-400 mr-1 hidden sm:inline">Scope:</span>
-                    <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm">All</button>
-                    <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition">Title</button>
-                    <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition">Artist</button>
-                    <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition">Song #</button>
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0 font-medium text-xs -mx-1 px-1">
+                    <span class="text-slate-400 mr-1 hidden sm:inline flex-shrink-0">Scope:</span>
+                    <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0">All</button>
+                    <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Title</button>
+                    <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Artist</button>
+                    <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Song #</button>
                 </div>
             </div>
 
             <!-- Sorting & View Modes Bar -->
-            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stage-700/60 text-xs sm:text-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2.5 sm:pt-3 border-t border-stage-700/60 text-xs sm:text-sm">
                 
                 <!-- Sort Dropdown -->
-                <div class="flex items-center space-x-2">
-                    <label for="sortOption" class="text-slate-400 font-semibold"><i class="fa-solid fa-arrow-down-short-wide text-gold-400 mr-1"></i>Sort:</label>
-                    <select id="sortOption" onchange="handleSortChange()" class="bg-stage-950 border border-stage-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-gold-500 font-medium">
+                <div class="flex items-center space-x-2 flex-grow sm:flex-grow-0">
+                    <label for="sortOption" class="text-slate-400 font-semibold whitespace-nowrap"><i class="fa-solid fa-arrow-down-short-wide text-gold-400 mr-1"></i>Sort:</label>
+                    <select id="sortOption" onchange="handleSortChange()" class="w-full sm:w-auto bg-stage-950 border border-stage-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-gold-500 font-medium text-xs sm:text-sm">
                         <option value="num-asc">Song # (00001 &rarr; 99999)</option>
                         <option value="num-desc">Song # (99999 &rarr; 00001)</option>
                         <option value="title-asc">Title (A &rarr; Z)</option>
@@ -250,8 +264,8 @@
             </div>
         </div>
 
-        <div class="no-print bg-stage-900/60 rounded-xl border border-stage-700/60 p-2 overflow-x-auto">
-            <div id="alphabetBar" class="flex items-center justify-between gap-1 min-w-max text-xs font-semibold font-mono">
+        <div class="no-print bg-stage-900/60 rounded-xl border border-stage-700/60 p-2 overflow-x-auto no-scrollbar">
+            <div id="alphabetBar" class="flex items-center gap-1 min-w-max text-xs font-semibold font-mono">
                 <!-- Dynamically populated via JavaScript -->
             </div>
         </div>
@@ -260,16 +274,16 @@
             <!-- Dynamic Song Cards / Rows / Binder View inserted here -->
         </div>
 
-        <div id="paginationBar" class="no-print flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-stage-800 text-xs sm:text-sm text-slate-400">
+        <div id="paginationBar" class="no-print flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pt-4 border-t border-stage-800 text-xs sm:text-sm text-slate-400">
             <div class="flex items-center space-x-2">
-                <span>Show per page:</span>
-                <select id="pageSizeSelect" onchange="handlePageSizeChange()" class="bg-stage-900 border border-stage-700 rounded-lg px-2.5 py-1 text-slate-200 font-mono">
+                <span>Show:</span>
+                <select id="pageSizeSelect" onchange="handlePageSizeChange()" class="bg-stage-900 border border-stage-700 rounded-lg px-2 py-1 text-slate-200 font-mono text-xs sm:text-sm">
                     <option value="24">24</option>
                     <option value="48" selected>48</option>
                     <option value="96">96</option>
                     <option value="200">200</option>
                 </select>
-                <span id="pageStatsText" class="ml-2 font-mono text-slate-400">Showing 0-0 of 0</span>
+                <span id="pageStatsText" class="ml-2 font-mono text-slate-400 text-xs sm:text-sm">Showing 0-0 of 0</span>
             </div>
 
             <div id="paginationControls" class="flex items-center space-x-1 font-mono">
@@ -279,8 +293,8 @@
 
     </main>
 
-    <div id="uploadModal" class="no-print fixed inset-0 bg-stage-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-4 transition-all duration-200">
-        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-5 gold-border-glow">
+    <div id="uploadModal" class="no-print fixed inset-0 bg-stage-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-4 transition-all duration-200 overflow-y-auto">
+        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl relative space-y-4 sm:space-y-5 gold-border-glow max-h-[90vh] overflow-y-auto my-auto">
             <button onclick="closeUploadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
@@ -320,6 +334,9 @@
     <div id="songDetailModal" class="no-print fixed inset-0 bg-stage-950/85 backdrop-blur-md z-50 hidden items-center justify-center p-4">
         <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-5 gold-border-glow overflow-hidden">
             <!-- Background Record Accent -->
+    <div id="songDetailModal" class="no-print fixed inset-0 bg-stage-950/85 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative space-y-4 sm:space-y-5 gold-border-glow overflow-hidden max-h-[90vh] overflow-y-auto my-auto">
+            <!-- Background Record Accent -->
             <div class="absolute -right-10 -top-10 opacity-10 pointer-events-none text-gold-400">
                 <i class="fa-solid fa-record-vinyl text-[160px]"></i>
             </div>
@@ -329,20 +346,20 @@
             </button>
 
             <!-- Song Info Card Header -->
-            <div class="flex items-start gap-4 pr-6">
-                <div class="bg-gradient-to-br from-gold-300 via-gold-500 to-amber-700 text-slate-950 font-mono font-bold text-xl sm:text-2xl px-3.5 py-3 rounded-xl shadow-lg border border-gold-300 min-w-[90px] text-center">
+            <div class="flex items-start gap-3 sm:gap-4 pr-6">
+                <div class="bg-gradient-to-br from-gold-300 via-gold-500 to-amber-700 text-slate-950 font-mono font-bold text-lg sm:text-2xl px-3 py-2.5 sm:px-3.5 sm:py-3 rounded-xl shadow-lg border border-gold-300 min-w-[80px] sm:min-w-[90px] text-center">
                     <span id="modalSongNum">00001</span>
                 </div>
                 <div class="flex-grow min-w-0">
-                    <h2 id="modalSongTitle" class="text-xl font-bold text-white leading-tight truncate">Song Title</h2>
-                    <p id="modalSongArtist" class="text-sm font-semibold text-gold-400 mt-1 truncate">Artist Name</p>
+                    <h2 id="modalSongTitle" class="text-lg sm:text-xl font-bold text-white leading-tight truncate">Song Title</h2>
+                    <p id="modalSongArtist" class="text-xs sm:text-sm font-semibold text-gold-400 mt-1 truncate">Artist Name</p>
                 </div>
             </div>
 
             <!-- Pitch Reference Synthesizer (Web Audio API) -->
-            <div class="bg-stage-950/90 rounded-xl p-4 border border-stage-700/80 space-y-2">
-                <div class="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    <span><i class="fa-solid fa-tuning-fork text-gold-400 mr-1.5"></i>Vocal Pitch Pipe Helper</span>
+            <div class="bg-stage-950/90 rounded-xl p-3 sm:p-4 border border-stage-700/80 space-y-2">
+                <div class="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <span><i class="fa-solid fa-tuning-fork text-gold-400 mr-1.5"></i>Pitch Pipe Helper</span>
                     <span class="text-gold-500 text-[10px] font-mono">Synth Pitch</span>
                 </div>
                 <div class="grid grid-cols-7 gap-1 pt-1 font-mono">
@@ -366,22 +383,19 @@
             </div>
 
             <!-- Modal Action Buttons -->
-            <div class="flex items-center justify-between gap-3 pt-2">
-                <button id="modalFavToggleBtn" onclick="toggleModalFav()" class="flex-1 py-2.5 px-4 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-200 font-semibold text-xs flex items-center justify-center space-x-2 border border-stage-700 transition">
+            <div class="flex flex-col xs:flex-row sm:flex-row items-center justify-between gap-2.5 sm:gap-3 pt-2">
+                <button id="modalFavToggleBtn" onclick="toggleModalFav()" class="w-full sm:w-1/2 py-2.5 px-4 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-200 font-semibold text-xs flex items-center justify-center space-x-2 border border-stage-700 transition">
                     <i class="fa-solid fa-star text-amber-400"></i>
                     <span id="modalFavText">Favorite</span>
                 </button>
 
-                <button onclick="copySongCode()" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg transition">
+                <button onclick="copySongCode()" class="w-full sm:w-1/2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg transition">
                     <i class="fa-solid fa-copy"></i>
                     <span>Copy Song Code</span>
                 </button>
             </div>
         </div>
     </div>
-
-    <!-- Notification Toast Container -->
-    <div id="toastContainer" class="no-print fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
     <script>
         // Core Application State
@@ -572,7 +586,7 @@
             const letters = ['ALL', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
             const container = document.getElementById('alphabetBar');
             container.innerHTML = letters.map(let => `
-                <button onclick="setLetterFilter('${let}')" id="let-${let}" class="px-2.5 py-1 rounded-md ${let === 'ALL' ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800'} transition">
+                <button onclick="setLetterFilter('${let}')" id="let-${let}" class="px-2.5 py-1.5 min-w-[32px] h-8 rounded-md flex items-center justify-center ${let === 'ALL' ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800'} transition flex-shrink-0">
                     ${let}
                 </button>
             `).join('');
@@ -798,16 +812,55 @@
         function renderGridCardHtml(song) {
             const isFav = favoriteIds.has(song.id);
             return `
-                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print bg-stage-900/90 hover:bg-stage-800/90 border border-stage-700 hover:border-gold-500/60 rounded-xl p-4 transition-all duration-200 cursor-pointer flex items-center space-x-3.5 group relative shadow-md gold-border-glow">
-                    <div class="bg-gradient-to-br from-gold-300 via-gold-500 to-amber-700 text-slate-950 font-mono font-bold text-base sm:text-lg px-2.5 py-2 rounded-lg flex items-center justify-center min-w-[70px] shadow-sm group-hover:scale-105 transition">
+                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print bg-stage-900/90 hover:bg-stage-800/90 border border-stage-700 hover:border-gold-500/60 rounded-xl p-3.5 sm:p-4 transition-all duration-200 cursor-pointer flex items-center space-x-3 sm:space-x-3.5 group relative shadow-md gold-border-glow">
+                    <div class="bg-gradient-to-br from-gold-300 via-gold-500 to-amber-700 text-slate-950 font-mono font-bold text-base sm:text-lg px-2.5 py-2 rounded-lg flex items-center justify-center min-w-[68px] sm:min-w-[70px] shadow-sm group-hover:scale-105 transition flex-shrink-0">
                         ${song.id}
                     </div>
                     <div class="flex-grow min-w-0 pr-6">
-                        <h4 class="text-sm font-bold text-slate-100 truncate group-hover:text-gold-300 transition">${escapeHtml(song.title)}</h4>
-                        <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(song.artist)}</p>
+                        <h4 class="text-xs sm:text-sm font-bold text-slate-100 truncate group-hover:text-gold-300 transition">${escapeHtml(song.title)}</h4>
+                        <p class="text-[11px] sm:text-xs text-slate-400 truncate mt-0.5">${escapeHtml(song.artist)}</p>
                     </div>
-                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print absolute top-3 right-3 text-slate-600 hover:text-amber-400 transition">
+                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print absolute top-2.5 right-2.5 p-2 text-slate-600 hover:text-amber-400 transition" title="Toggle Favorite">
                         <i class="fa-solid fa-star text-sm ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderListItemHtml(song) {
+            const isFav = favoriteIds.has(song.id);
+            return `
+                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between hover:bg-stage-800/60 cursor-pointer transition group">
+                    <div class="flex items-center space-x-3 sm:space-x-4 min-w-0">
+                        <span class="font-mono font-bold text-gold-400 text-xs sm:text-sm bg-stage-950 border border-stage-700 px-2.5 sm:px-3 py-1 rounded-md min-w-[68px] sm:min-w-[75px] text-center flex-shrink-0">${song.id}</span>
+                        <div class="min-w-0">
+                            <span class="text-xs sm:text-sm font-semibold text-slate-100 group-hover:text-gold-300 transition truncate block">${escapeHtml(song.title)}</span>
+                            <span class="text-[11px] sm:text-xs text-slate-400 truncate block">${escapeHtml(song.artist)}</span>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print p-2 text-slate-600 hover:text-amber-400 transition" title="Toggle Favorite">
+                        <i class="fa-solid fa-star text-sm ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderBinderCardHtml(song) {
+            const isFav = favoriteIds.has(song.id);
+            return `
+                <div onclick="openSongDetailModal('${song.id}')" class="song-card-print bg-gradient-to-r from-stage-900 to-stage-800 border-l-4 border-l-gold-500 border border-stage-700 rounded-r-xl p-3.5 sm:p-4 cursor-pointer hover:bg-stage-800/80 transition flex items-center justify-between group">
+                    <div class="flex items-center space-x-3 sm:space-x-4 min-w-0">
+                        <div class="text-center min-w-[65px] sm:min-w-[70px] flex-shrink-0">
+                            <span class="block text-[8px] sm:text-[9px] uppercase font-mono tracking-wider text-slate-500 font-bold">SONG CODE</span>
+                            <span class="text-base sm:text-lg font-mono font-bold text-gold-400">${song.id}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-sm sm:text-base font-bold text-slate-100 group-hover:text-gold-300 transition truncate">${escapeHtml(song.title)}</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">${escapeHtml(song.artist)}</p>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); toggleFavoriteId('${song.id}')" class="no-print p-2 text-slate-600 hover:text-amber-400 transition" title="Toggle Favorite">
+                        <i class="fa-solid fa-star text-sm sm:text-base ${isFav ? 'text-amber-400' : 'text-slate-600'}"></i>
                     </button>
                 </div>
             `;
@@ -883,15 +936,17 @@
                 </button>
             `;
 
+            const windowSize = window.innerWidth < 640 ? 0 : 1;
+
             for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                if (i === 1 || i === totalPages || (i >= currentPage - windowSize && i <= currentPage + windowSize)) {
                     html += `
-                        <button onclick="goToPage(${i})" class="px-3 py-1 rounded text-xs font-semibold ${i === currentPage ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-800 hover:bg-stage-700 text-slate-300'} transition">
+                        <button onclick="goToPage(${i})" class="px-2.5 sm:px-3 py-1 rounded text-xs font-semibold ${i === currentPage ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-800 hover:bg-stage-700 text-slate-300'} transition">
                             ${i}
                         </button>
                     `;
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    html += `<span class="px-1 text-slate-600">...</span>`;
+                } else if (i === currentPage - (windowSize + 1) || i === currentPage + (windowSize + 1)) {
+                    html += `<span class="px-0.5 sm:px-1 text-slate-600 text-xs">...</span>`;
                 }
             }
 
