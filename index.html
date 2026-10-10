@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Digital Songbook for SongHub</title>
+    <title>Digital Songbook - Vintage Vinyl & Karaoke Binder</title>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.webmanifest">
@@ -149,13 +149,50 @@
         }
         /* Toasts above the home indicator */
         #toastContainer {
-            bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+            bottom: calc(var(--fab-offset, 0px) + 1.25rem + env(safe-area-inset-bottom, 0px));
             right: calc(1.25rem + env(safe-area-inset-right, 0px));
         }
         /* iOS zooms the page when focusing inputs under 16px */
         @supports (-webkit-touch-callout: none) {
             input, textarea, select { font-size: 16px !important; }
         }
+
+        /* ===== Floating search bar ===== */
+        #floatSearch {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            z-index: 45;
+            padding: 0 max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px));
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            transform: translateY(calc(100% + 1rem));
+            visibility: hidden;
+            transition: transform 0.25s ease, visibility 0s linear 0.25s;
+            will-change: transform;
+        }
+        #floatSearch.open {
+            transform: translateY(var(--kb-offset, 0px));
+            visibility: visible;
+            transition: transform 0.25s ease, visibility 0s;
+        }
+        #floatSearch .float-search-inner {
+            pointer-events: auto;
+            width: 100%;
+            max-width: 42rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.75rem;
+            background: rgba(15, 19, 29, 0.94);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(234, 179, 8, 0.45);
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 18px rgba(250, 204, 21, 0.12);
+        }
+        body.search-open { --fab-offset: 4.5rem; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+        #floatSearchInput::-webkit-search-cancel-button { display: none; }
 
         /* Print Media Styles for physical songbook export */
         @media print {
@@ -193,7 +230,7 @@
                 </div>
                 <div class="truncate">
                     <h1 class="text-base sm:text-2xl font-serif font-black tracking-wider gold-gradient-text uppercase leading-none">Songbook</h1>
-                    <p class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">For SongHub (Old ver.)</p>
+                    <p class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">For SongHub (Old Ver.)</p>
                 </div>
             </div>
 
@@ -218,9 +255,9 @@
                     <span class="hidden xs:inline sm:inline">CSV</span>
                 </button>
 
-                <!-- Print Songbook Trigger -->
-                <button onclick="window.print()" class="p-1.5 sm:p-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-slate-300 hover:text-white border border-stage-700 transition" title="Print Songbook">
-                    <i class="fa-solid fa-print text-xs sm:text-sm"></i>
+                <!-- Floating Search Trigger -->
+                <button id="searchToggleBtn" onclick="toggleFloatingSearch()" class="px-3 sm:px-4 py-1 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 border border-gold-500/30 transition" title="Search" aria-label="Search" aria-expanded="false">
+                    <i class="fa-solid fa-magnifying-glass text-xs sm:text-sm"></i>
                 </button>
             </div>
         </div>
@@ -290,7 +327,7 @@
                 <!-- Sort Dropdown -->
                 <div class="flex items-center space-x-2 flex-grow sm:flex-grow-0">
                     <label for="sortOption" class="text-slate-400 font-semibold whitespace-nowrap"><i class="fa-solid fa-arrow-down-short-wide text-gold-400 mr-1"></i>Sort:</label>
-                    <select id="sortOption" onchange="handleSortChange()" class="w-full sm:w-auto bg-stage-950 border border-stage-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-gold-500 font-medium text-xs sm:text-xs">
+                    <select id="sortOption" onchange="handleSortChange()" class="w-full sm:w-auto bg-stage-950 border border-stage-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-gold-500 font-medium text-xs sm:text-sm">
                         <option value="title-asc">Title (A &rarr; Z)</option>
                         <option value="title-desc">Title (Z &rarr; A)</option>
                         <option value="artist-asc">Artist (A &rarr; Z)</option>
@@ -457,7 +494,24 @@
     </div>
 
     <!-- Toast Notification Container -->
-    <button id="backToTopBtn" onclick="scrollToTop()" title="Back to top" class="no-print hidden fixed z-40 w-11 h-11 rounded-full bg-gold-500 hover:bg-gold-400 text-slate-950 shadow-xl flex items-center justify-center transition" style="left:calc(1.25rem + env(safe-area-inset-left, 0px)); bottom:calc(1.25rem + env(safe-area-inset-bottom, 0px));">
+    <!-- Floating search bar -->
+    <div id="floatSearch" class="no-print" aria-hidden="true">
+        <div class="float-search-inner">
+            <i class="fa-solid fa-magnifying-glass text-gold-400 text-sm flex-shrink-0"></i>
+            <input id="floatSearchInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                   placeholder="Search title, artist or song #…" oninput="handleFloatSearchInput()" onkeydown="handleFloatSearchKey(event)"
+                   class="flex-grow min-w-0 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-sm">
+            <span id="floatSearchCount" class="hidden sm:inline text-[11px] font-mono text-slate-500 flex-shrink-0"></span>
+            <button id="floatSearchClear" onclick="clearFloatSearch()" class="hidden p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Clear" aria-label="Clear search">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </button>
+            <button onclick="closeFloatingSearch()" class="p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Close search" aria-label="Close search">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+        </div>
+    </div>
+
+    <button id="backToTopBtn" onclick="scrollToTop()" title="Back to top" class="no-print hidden fixed z-40 w-11 h-11 rounded-full bg-gold-500 hover:bg-gold-400 text-slate-950 shadow-xl flex items-center justify-center transition" style="left:calc(1.25rem + env(safe-area-inset-left, 0px)); bottom:calc(var(--fab-offset, 0px) + 1.25rem + env(safe-area-inset-bottom, 0px));">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
@@ -722,14 +776,85 @@
             const input = document.getElementById('searchInput');
             currentSearchQuery = input.value.trim().toLowerCase();
             document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearchQuery === '');
+            syncFloatSearchFromMain();
             visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
+        }
+
+
+        // ===== Floating search bar =====
+        function toggleFloatingSearch() {
+            document.getElementById('floatSearch').classList.contains('open') ? closeFloatingSearch() : openFloatingSearch();
+        }
+
+        function openFloatingSearch() {
+            const bar = document.getElementById('floatSearch');
+            const input = document.getElementById('floatSearchInput');
+            input.value = document.getElementById('searchInput').value;
+            bar.classList.add('open');
+            bar.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('search-open');
+            document.getElementById('searchToggleBtn').setAttribute('aria-expanded', 'true');
+            document.getElementById('floatSearchClear').classList.toggle('hidden', input.value === '');
+            updateScrollStatus();
+            // focus inside the tap gesture so iOS shows the keyboard
+            input.focus({ preventScroll: true });
+            input.select();
+        }
+
+        function closeFloatingSearch() {
+            const bar = document.getElementById('floatSearch');
+            document.getElementById('floatSearchInput').blur();
+            bar.classList.remove('open');
+            bar.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('search-open');
+            document.getElementById('searchToggleBtn').setAttribute('aria-expanded', 'false');
+        }
+
+        function handleFloatSearchInput() {
+            const v = document.getElementById('floatSearchInput').value;
+            document.getElementById('searchInput').value = v;
+            document.getElementById('floatSearchClear').classList.toggle('hidden', v === '');
+            handleSearchChange();
+        }
+
+        function handleFloatSearchKey(e) {
+            if (e.key === 'Enter') e.target.blur();          // dismiss the keyboard, keep the bar
+            else if (e.key === 'Escape') closeFloatingSearch();
+        }
+
+        function clearFloatSearch() {
+            const input = document.getElementById('floatSearchInput');
+            input.value = '';
+            document.getElementById('floatSearchClear').classList.add('hidden');
+            clearSearchInput();
+            input.focus({ preventScroll: true });
+        }
+
+        // keep the bar above the iOS/Android on-screen keyboard
+        if (window.visualViewport) {
+            const adjustForKeyboard = () => {
+                const vv = window.visualViewport;
+                const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+                document.documentElement.style.setProperty('--kb-offset', (-offset) + 'px');
+            };
+            window.visualViewport.addEventListener('resize', adjustForKeyboard);
+            window.visualViewport.addEventListener('scroll', adjustForKeyboard);
+        }
+
+        function syncFloatSearchFromMain() {
+            const f = document.getElementById('floatSearchInput');
+            const m = document.getElementById('searchInput');
+            if (f && m && f.value !== m.value) f.value = m.value;
+            const c = document.getElementById('floatSearchClear');
+            if (c && m) c.classList.toggle('hidden', m.value === '');
         }
 
         function clearSearchInput() {
             document.getElementById('searchInput').value = '';
             currentSearchQuery = '';
             document.getElementById('clearSearchBtn').classList.add('hidden');
+            syncFloatSearchFromMain();
             visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
         }
@@ -961,6 +1086,8 @@
             const statsText = document.getElementById('pageStatsText');
             const hint = document.getElementById('scrollHint');
             if (statsText) statsText.innerText = total === 0 ? 'Showing 0 of 0' : `Showing ${renderedCount.toLocaleString()} of ${total.toLocaleString()}`;
+            const fc = document.getElementById('floatSearchCount');
+            if (fc) fc.innerText = total.toLocaleString() + ' found';
             if (hint) hint.innerText = total > 0 && renderedCount >= total ? 'End of list' : (total > 0 ? 'Scroll for more' : '');
         }
 
