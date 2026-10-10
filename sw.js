@@ -1,10 +1,11 @@
 /* Service worker: offline-first for the app shell + third-party libs/fonts */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = 'songbook-' + VERSION;
 
 const SHELL = [
   './',
   './index.html',
+  './songs.csv',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -76,6 +77,21 @@ self.addEventListener('fetch', event => {
       } catch (e) {
         return (await caches.match('./index.html', { ignoreSearch: true })) ||
                (await caches.match('./', { ignoreSearch: true }));
+      }
+    })());
+    return;
+  }
+
+  // Default song list: network-first so edits to songs.csv show up, cached copy when offline.
+  if (url.origin === location.origin && url.pathname.endsWith('/songs.csv')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const fresh = await fetch(req);
+        if (fresh.ok) cache.put('./songs.csv', fresh.clone());
+        return fresh;
+      } catch (e) {
+        return (await cache.match('./songs.csv', { ignoreSearch: true })) || new Response('', { status: 504 });
       }
     })());
     return;
