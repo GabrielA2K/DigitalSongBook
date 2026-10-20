@@ -159,18 +159,18 @@
 
         /* ===== Floating search bar ===== */
         #bottom-nav {
-            transform: translateY(var(--kb-offset, 0px));
+            /* transform: translateY(var(--kb-offset, 0px)); */
             /* transition: transform 0.25s ease; */
-            will-change: transform;
+            /* will-change: transform; */
 
         }
         #floatSearch {
             /* position: fixed; */
             /* left: 0; right: 0; bottom: 0; */
             /* padding: 0 max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)); */
-            /* display: flex;
+            display: flex;
             justify-content: center;
-            pointer-events: none; */
+            pointer-events: none;
             /* transform: translateY(var(--kb-offset, 0px)); */
             /* transition: transform 0.25s ease; */
             /* will-change: transform; */
@@ -463,7 +463,7 @@
                     <i class="fa-solid fa-magnifying-glass text-gold-400 text-sm flex-shrink-0"></i>
                     <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                         placeholder="Search title, artist or song #…" oninput="handleSearchChange()" onkeydown="handleSearchKey(event)"
-                        class="flex-grow min-w-0 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-sm py-2">
+                        class="flex-grow min-w-0 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-[13px] py-2">
                     <span id="floatSearchCount" class="sm:inline text-[11px] font-mono text-slate-500 flex-shrink-0"></span>
                     <button id="clearSearchBtn" onclick="clearSearchInput(); document.getElementById('searchInput').focus({ preventScroll: true });" class="hidden p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Clear" aria-label="Clear search">
                         <i class="fa-solid fa-circle-xmark"></i>
