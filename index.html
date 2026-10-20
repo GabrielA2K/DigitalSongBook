@@ -159,21 +159,21 @@
 
         /* ===== Floating search bar ===== */
         #floatSearch {
-            position: fixed;
-            left: 0; right: 0; bottom: 0;
+            /* position: fixed; */
+            /* left: 0; right: 0; bottom: 0; */
             z-index: 45;
-            padding: 0 max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px));
+            /* padding: 0 max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)); */
             display: flex;
             justify-content: center;
             pointer-events: none;
             transform: translateY(var(--kb-offset, 0px));
-            transition: transform 0.25s ease;
+            /* transition: transform 0.25s ease; */
             will-change: transform;
         }
         #floatSearch .float-search-inner {
             pointer-events: auto;
             width: 100%;
-            max-width: 42rem;
+            /* max-width: 42rem; */
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -224,7 +224,7 @@
                 </div>
                 <div class="truncate">
                     <h1 class="text-base sm:text-2xl font-serif font-black tracking-wider gold-gradient-text uppercase leading-none">Songbook</h1>
-                    <p id="brandSubtitle" class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">For SongHub (Old Ver.)</p>
+                    <p id="brandSubtitle" class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">For SongHub</p>
                 </div>
             </div>
 
@@ -238,10 +238,10 @@
                 </button>
 
                 <!-- Load Sample Demo Songs -->
-                <button onclick="restoreDefaultDemoSongs()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center space-x-1 sm:space-x-1.5 shadow-md shadow-amber-950/40 transition">
+                <!-- <button onclick="restoreDefaultDemoSongs()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-amber-600 via-gold-600 to-gold-500 hover:from-amber-500 hover:to-gold-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center space-x-1 sm:space-x-1.5 shadow-md shadow-amber-950/40 transition">
                     <i class="fa-solid fa-music text-xs sm:text-sm"></i>
                     <span class="hidden sm:inline">Default Songs</span>
-                </button>
+                </button> -->
 
                 <!-- CSV Import Modal Button -->
                 <button onclick="openUploadModal()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 font-semibold text-xs sm:text-sm flex items-center space-x-1 sm:space-x-1.5 border border-gold-500/30 transition">
@@ -268,35 +268,10 @@
 
     <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full space-y-4 sm:space-y-6">
 
-        <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-3 sm:p-4 shadow-xl">
-            <div class="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
-
-                <!-- Scope Filter Buttons -->
-                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar font-medium text-xs -mx-1 px-1">
-                    <span class="text-slate-400 mr-1 hidden sm:inline flex-shrink-0">Search in:</span>
-                    <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0">All</button>
-                    <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Title</button>
-                    <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Artist</button>
-                    <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Song #</button>
-                </div>
-
-                <!-- View Mode Buttons -->
-                <div class="flex items-center space-x-1 bg-stage-950 p-1 rounded-lg border border-stage-700">
-                    <button onclick="setViewMode('grid')" id="view-btn-grid" title="Grid Cards" class="p-1.5 rounded-md text-gold-400 bg-stage-800 transition">
-                        <i class="fa-solid fa-border-all text-sm w-5 h-5 flex items-center justify-center"></i>
-                    </button>
-                    <button onclick="setViewMode('list')" id="view-btn-list" title="Compact Table List" class="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">
-                        <i class="fa-solid fa-list-ul text-sm w-5 h-5 flex items-center justify-center"></i>
-                    </button>
-                    <button onclick="setViewMode('binder')" id="view-btn-binder" title="Vintage Vinyl Binder" class="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">
-                        <i class="fa-solid fa-book-open text-sm w-5 h-5 flex items-center justify-center"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+        
 
         <!-- Songs Grid / List Container -->
-        <div id="songsContainer" class="min-h-[350px]">
+        <div id="songsContainer" class="min-h-[350px] mb-[4.8rem]">
             <!-- Dynamic Song Cards / Rows / Binder View inserted here -->
         </div>
 
@@ -476,21 +451,56 @@
 
     <!-- Toast Notification Container -->
     <!-- Search bar (pinned at the bottom) -->
-    <div id="floatSearch" class="no-print">
-        <div class="float-search-inner">
-            <i class="fa-solid fa-magnifying-glass text-gold-400 text-sm flex-shrink-0"></i>
-            <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                   placeholder="Search title, artist or song #…" oninput="handleSearchChange()" onkeydown="handleSearchKey(event)"
-                   class="flex-grow min-w-0 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-sm">
-            <span id="floatSearchCount" class="hidden sm:inline text-[11px] font-mono text-slate-500 flex-shrink-0"></span>
-            <button id="clearSearchBtn" onclick="clearSearchInput(); document.getElementById('searchInput').focus({ preventScroll: true });" class="hidden p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Clear" aria-label="Clear search">
-                <i class="fa-solid fa-circle-xmark"></i>
-            </button>
-        </div>
-    </div>
+     <div id="bottom-nav" class="bg-stage-900/90 fixed bottom-0 left-0 right-0 min-h-32 z-1 p-3 sm:p-4 border-t border-stage-800/80 backdrop-blur-md flex ">
+        <div class="flex flex-col items-stretch justify-end w-full max-w-7xl mx-auto">
+            <div id="floatSearch" class="no-print mb-2">
+                <div class="float-search-inner">
+                    <i class="fa-solid fa-magnifying-glass text-gold-400 text-sm flex-shrink-0"></i>
+                    <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                        placeholder="Search title, artist or song #…" oninput="handleSearchChange()" onkeydown="handleSearchKey(event)"
+                        class="flex-grow min-w-0 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-sm py-2">
+                    <span id="floatSearchCount" class="sm:inline text-[11px] font-mono text-slate-500 flex-shrink-0"></span>
+                    <button id="clearSearchBtn" onclick="clearSearchInput(); document.getElementById('searchInput').focus({ preventScroll: true });" class="hidden p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Clear" aria-label="Clear search">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-2 shadow-xl grow">
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
 
-    <button id="backToTopBtn" onclick="scrollToTop()" title="Back to top" class="no-print hidden fixed z-40 w-11 h-11 rounded-full bg-gold-500 hover:bg-gold-400 text-slate-950 shadow-xl flex items-center justify-center transition" style="left:calc(1.25rem + env(safe-area-inset-left, 0px)); bottom:calc(var(--fab-offset, 0px) + 1.25rem + env(safe-area-inset-bottom, 0px));">
-        <i class="fa-solid fa-arrow-up"></i>
+                    <!-- Scope Filter Buttons -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar font-medium text-xs -mx-1 px-1">
+                        <!-- <span class="text-slate-400 mr-1 hidden sm:inline flex-shrink-0">Search in:</span> -->
+                        <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0">All</button>
+                        <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Title</button>
+                        <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Artist</button>
+                        <!-- <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Song #</button> -->
+                    </div>
+
+                    <!-- View Mode Buttons -->
+                    <div class="flex items-center space-x-1 bg-stage-950 p-1 rounded-lg border border-stage-700">
+                        <button onclick="setViewMode('grid')" id="view-btn-grid" title="Grid Cards" class="p-1.5 rounded-md text-gold-400 bg-stage-800 transition">
+                            <i class="fa-solid fa-border-all text-sm w-5 h-5 flex items-center justify-center"></i>
+                        </button>
+                        <button onclick="setViewMode('list')" id="view-btn-list" title="Compact Table List" class="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">
+                            <i class="fa-solid fa-list-ul text-sm w-5 h-5 flex items-center justify-center"></i>
+                        </button>
+                        <button onclick="setViewMode('binder')" id="view-btn-binder" title="Vintage Vinyl Binder" class="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition">
+                            <i class="fa-solid fa-book-open text-sm w-5 h-5 flex items-center justify-center"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        
+
+     </div>
+    
+
+    <button id="backToTopBtn" onclick="scrollToTop()" title="Back to top" class="no-print hidden fixed z-40 min-w-11 h-11 rounded-full bg-gold-500/60 backdrop-blur-sm hover:bg-gold-400 text-slate-950 shadow-xl flex items-center justify-center transition text-sm flex gap-2 px-4" style="left:calc(50% - 4.5rem); bottom:calc(var(--fab-offset, 0px) + 5.4rem + env(safe-area-inset-bottom, 0px));">
+        <i class="fa-solid fa-arrow-up"></i> Scroll to Top
     </button>
 
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
@@ -536,7 +546,7 @@
         let currentLetter = 'ALL';
         // Shared collator: much faster than localeCompare when sorting ~48k songs
         const sortCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
-        const DEFAULT_VIEW = 'list';
+        const DEFAULT_VIEW = 'binder';
         let viewMode = DEFAULT_VIEW; // 'grid', 'list', 'binder'
         let showFavsOnly = false;
         
