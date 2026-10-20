@@ -158,17 +158,22 @@
         }
 
         /* ===== Floating search bar ===== */
-        #floatSearch {
-            /* position: fixed; */
-            /* left: 0; right: 0; bottom: 0; */
-            z-index: 45;
-            /* padding: 0 max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)); */
-            display: flex;
-            justify-content: center;
-            pointer-events: none;
+        #bottom-nav {
             transform: translateY(var(--kb-offset, 0px));
             /* transition: transform 0.25s ease; */
             will-change: transform;
+
+        }
+        #floatSearch {
+            /* position: fixed; */
+            /* left: 0; right: 0; bottom: 0; */
+            /* padding: 0 max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px)); */
+            /* display: flex;
+            justify-content: center;
+            pointer-events: none; */
+            /* transform: translateY(var(--kb-offset, 0px)); */
+            /* transition: transform 0.25s ease; */
+            /* will-change: transform; */
         }
         #floatSearch .float-search-inner {
             pointer-events: auto;
