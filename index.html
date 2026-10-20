@@ -137,13 +137,13 @@
             padding-right: env(safe-area-inset-right, 0px);
         }
         /* Modals: keep content clear of notch + home indicator */
-        #uploadModal, #songDetailModal {
+        #uploadModal, #songDetailModal, #infoModal {
             padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
             padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
             padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
             padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
         }
-        #uploadModal > div, #songDetailModal > div {
+        #uploadModal > div, #songDetailModal > div, #infoModal > div {
             max-height: 90vh;
             max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
         }
@@ -166,15 +166,9 @@
             display: flex;
             justify-content: center;
             pointer-events: none;
-            transform: translateY(calc(100% + 1rem));
-            visibility: hidden;
-            transition: transform 0.25s ease, visibility 0s linear 0.25s;
-            will-change: transform;
-        }
-        #floatSearch.open {
             transform: translateY(var(--kb-offset, 0px));
-            visibility: visible;
-            transition: transform 0.25s ease, visibility 0s;
+            transition: transform 0.25s ease;
+            will-change: transform;
         }
         #floatSearch .float-search-inner {
             pointer-events: auto;
@@ -191,8 +185,8 @@
             border-radius: 1rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 18px rgba(250, 204, 21, 0.12);
         }
-        body.search-open { --fab-offset: 4.5rem; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
-        #floatSearchInput::-webkit-search-cancel-button { display: none; }
+        body { --fab-offset: 4.5rem; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+        #searchInput::-webkit-search-cancel-button { display: none; }
 
         /* Print Media Styles for physical songbook export */
         @media print {
@@ -230,7 +224,7 @@
                 </div>
                 <div class="truncate">
                     <h1 class="text-base sm:text-2xl font-serif font-black tracking-wider gold-gradient-text uppercase leading-none">Songbook</h1>
-                    <p class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">For SongHub (Old Ver.)</p>
+                    <p id="brandSubtitle" class="text-[9px] sm:text-[11px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 truncate">For SongHub (Old Ver.)</p>
                 </div>
             </div>
 
@@ -255,86 +249,35 @@
                     <span class="hidden xs:inline sm:inline">CSV</span>
                 </button>
 
-                <!-- Floating Search Trigger -->
-                <button id="searchToggleBtn" onclick="toggleFloatingSearch()" class="px-3 sm:px-4 py-1 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 border border-gold-500/30 transition" title="Search" aria-label="Search" aria-expanded="false">
-                    <i class="fa-solid fa-magnifying-glass text-xs sm:text-sm"></i>
+                <!-- Songbook Info -->
+                <button id="infoBtn" onclick="openInfoModal()" class="px-3 sm:px-4 py-1 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-gold-400 hover:text-gold-300 border border-gold-500/30 transition" title="Songbook info" aria-label="Songbook info">
+                    <i class="fa-solid fa-circle-info text-xs sm:text-sm"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- Alphabet Bar (pinned with the top bar) -->
+        <div class="border-t border-stage-800/70">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 overflow-x-auto no-scrollbar">
+                <div id="alphabetBar" class="flex items-center gap-1 min-w-max text-xs font-semibold font-mono">
+                    <!-- Dynamically populated via JavaScript -->
+                </div>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full space-y-4 sm:space-y-6">
 
-        <!-- Top Banner / Songbook Stats Card -->
-        <div class="no-print bg-gradient-to-r from-stage-900 via-stage-800 to-stage-900 rounded-2xl border border-stage-700/80 p-4 sm:p-6 shadow-2xl relative overflow-hidden">
-            <!-- Vintage Mic Watermark -->
-            <div class="absolute -right-6 -bottom-8 opacity-5 pointer-events-none text-gold-400">
-                <i class="fa-solid fa-microphone-lines text-[120px] sm:text-[180px]"></i>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
-                <div class="space-y-1">
-                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <span id="catalogTitle" class="text-lg sm:text-2xl font-serif font-bold text-white">SongHub Songbook</span>
-                        <span id="sourceBadge" class="text-[10px] sm:text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 sm:px-2.5 py-0.5 rounded-full font-semibold">Default Songs Loaded</span>
-                    </div>
-                    <!-- <p class="text-[11px] sm:text-sm text-slate-400">All song numbers are formatted to <b>5 digits (e.g. 00001, 00452)</b>. Search works with both <b>padded ('00045')</b> or <b>plain numbers ('45')</b>.</p> -->
-                </div>
-
-                <!-- Song Count Badges -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <div class="flex-1 sm:flex-initial bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[110px]">
-                        <span class="block text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Songs</span>
-                        <span id="statTotalSongs" class="text-lg sm:text-xl font-mono font-bold text-gold-400">0</span>
-                    </div>
-                    <div class="flex-1 sm:flex-initial bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-center min-w-[90px] sm:min-w-[110px]">
-                        <span class="block text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-bold">Matching</span>
-                        <span id="statFilteredSongs" class="text-lg sm:text-xl font-mono font-bold text-slate-100">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-3.5 sm:p-5 space-y-3 sm:space-y-4 shadow-xl">
-            
-            <!-- Real-time Search Bar & Scope Filters -->
-            <div class="flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch lg:items-center justify-between">
-                
-                <!-- Main Search Input -->
-                <div class="relative flex-grow">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass text-sm sm:text-base"></i>
-                    </div>
-                    <input type="text" id="searchInput" oninput="handleSearchChange()" placeholder="Search title, artist, or song number (e.g., '00042' or '42')..." class="w-full pl-10 pr-10 py-2.5 sm:py-3 bg-stage-950 border border-stage-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition text-sm sm:text-base font-medium">
-                    <button id="clearSearchBtn" onclick="clearSearchInput()" class="hidden absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-white transition p-2">
-                        <i class="fa-solid fa-circle-xmark text-sm sm:text-base"></i>
-                    </button>
-                </div>
+        <div class="no-print bg-stage-900/90 backdrop-blur-md rounded-2xl border border-stage-700/80 p-3 sm:p-4 shadow-xl">
+            <div class="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
 
                 <!-- Scope Filter Buttons -->
-                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0 font-medium text-xs -mx-1 px-1">
-                    <span class="text-slate-400 mr-1 hidden sm:inline flex-shrink-0">Scope:</span>
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar font-medium text-xs -mx-1 px-1">
+                    <span class="text-slate-400 mr-1 hidden sm:inline flex-shrink-0">Search in:</span>
                     <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0">All</button>
                     <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Title</button>
                     <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Artist</button>
                     <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Song #</button>
-                </div>
-            </div>
-
-            <!-- Sorting & View Modes Bar -->
-            <div class="flex flex-wrap items-center justify-between gap-3 pt-2.5 sm:pt-3 border-t border-stage-700/60 text-xs sm:text-sm">
-                
-                <!-- Sort Dropdown -->
-                <div class="flex items-center space-x-2 flex-grow sm:flex-grow-0">
-                    <label for="sortOption" class="text-slate-400 font-semibold whitespace-nowrap"><i class="fa-solid fa-arrow-down-short-wide text-gold-400 mr-1"></i>Sort:</label>
-                    <select id="sortOption" onchange="handleSortChange()" class="w-full sm:w-auto bg-stage-950 border border-stage-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-gold-500 font-medium text-xs sm:text-sm">
-                        <option value="title-asc">Title (A &rarr; Z)</option>
-                        <option value="title-desc">Title (Z &rarr; A)</option>
-                        <option value="artist-asc">Artist (A &rarr; Z)</option>
-                        <option value="artist-desc">Artist (Z &rarr; A)</option>
-                        <option value="num-asc">Song # (00001 &rarr; 99999)</option>
-                        <option value="num-desc">Song # (99999 &rarr; 00001)</option>
-                    </select>
                 </div>
 
                 <!-- View Mode Buttons -->
@@ -349,13 +292,6 @@
                         <i class="fa-solid fa-book-open text-sm w-5 h-5 flex items-center justify-center"></i>
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Alphabet Bar -->
-        <div class="no-print bg-stage-900/60 rounded-xl border border-stage-700/60 p-2 overflow-x-auto no-scrollbar">
-            <div id="alphabetBar" class="flex items-center gap-1 min-w-max text-xs font-semibold font-mono">
-                <!-- Dynamically populated via JavaScript -->
             </div>
         </div>
 
@@ -390,6 +326,15 @@
             <div class="flex rounded-xl bg-stage-950 p-1 border border-stage-800 text-xs font-semibold">
                 <button id="tabBtnFile" onclick="switchUploadTab('file')" class="flex-1 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition">Choose File</button>
                 <button id="tabBtnPaste" onclick="switchUploadTab('paste')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">Paste CSV Text</button>
+            </div>
+
+            <!-- Default CSV toggle -->
+            <div class="space-y-1.5">
+                <p class="text-xs text-slate-400 font-semibold">Or use a default CSV</p>
+                <div id="defaultSourceToggle" class="flex rounded-xl bg-stage-950 p-1 border border-stage-800 text-xs font-semibold">
+                    <button id="defaultBtn-old" onclick="loadDefaultSource('old')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">Old Version (47k)</button>
+                    <button id="defaultBtn-new" onclick="loadDefaultSource('new')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">New Version (42k)</button>
+                </div>
             </div>
 
             <!-- File Upload Tab Content -->
@@ -493,20 +438,53 @@
         </div>
     </div>
 
+    <!-- Songbook info modal -->
+    <div id="infoModal" onclick="if(event.target===this) closeInfoModal()" class="no-print fixed inset-0 bg-stage-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-stage-900 border border-stage-700 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative space-y-4 gold-border-glow my-auto overflow-y-auto">
+            <button onclick="closeInfoModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg" aria-label="Close">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="space-y-2 pr-8">
+                <h3 class="text-xl font-serif font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-gold-400"></i>
+                    <span>Songbook info</span>
+                </h3>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span id="catalogTitle" class="text-base sm:text-lg font-serif font-bold text-white">SongHub Songbook</span>
+                    <span id="sourceBadge" class="text-[10px] sm:text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2 sm:px-2.5 py-0.5 rounded-full font-semibold">Default Songs Loaded</span>
+                </div>
+            </div>
+
+            <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 py-2.5">
+                <span class="block text-[10px] text-slate-400 font-semibold">Loaded CSV</span>
+                <span id="infoFileName" class="block text-sm font-mono text-slate-100 break-all">-</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 py-2.5 text-center">
+                    <span class="block text-[10px] text-slate-400 font-semibold">Total songs</span>
+                    <span id="statTotalSongs" class="text-xl font-mono font-bold text-gold-400">0</span>
+                </div>
+                <div class="bg-stage-950/80 border border-stage-700/80 rounded-xl px-3 py-2.5 text-center">
+                    <span class="block text-[10px] text-slate-400 font-semibold">Matching</span>
+                    <span id="statFilteredSongs" class="text-xl font-mono font-bold text-slate-100">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
-    <!-- Floating search bar -->
-    <div id="floatSearch" class="no-print" aria-hidden="true">
+    <!-- Search bar (pinned at the bottom) -->
+    <div id="floatSearch" class="no-print">
         <div class="float-search-inner">
             <i class="fa-solid fa-magnifying-glass text-gold-400 text-sm flex-shrink-0"></i>
-            <input id="floatSearchInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                   placeholder="Search title, artist or song #…" oninput="handleFloatSearchInput()" onkeydown="handleFloatSearchKey(event)"
+            <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                   placeholder="Search title, artist or song #…" oninput="handleSearchChange()" onkeydown="handleSearchKey(event)"
                    class="flex-grow min-w-0 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-sm">
             <span id="floatSearchCount" class="hidden sm:inline text-[11px] font-mono text-slate-500 flex-shrink-0"></span>
-            <button id="floatSearchClear" onclick="clearFloatSearch()" class="hidden p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Clear" aria-label="Clear search">
+            <button id="clearSearchBtn" onclick="clearSearchInput(); document.getElementById('searchInput').focus({ preventScroll: true });" class="hidden p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Clear" aria-label="Clear search">
                 <i class="fa-solid fa-circle-xmark"></i>
-            </button>
-            <button onclick="closeFloatingSearch()" class="p-1.5 text-slate-400 hover:text-white flex-shrink-0" title="Close search" aria-label="Close search">
-                <i class="fa-solid fa-chevron-down"></i>
             </button>
         </div>
     </div>
@@ -556,8 +534,6 @@
         let currentSearchQuery = '';
         let currentScope = 'all'; // 'all', 'title', 'artist', 'number'
         let currentLetter = 'ALL';
-        const DEFAULT_SORT = 'title-asc';
-        let currentSort = DEFAULT_SORT;
         // Shared collator: much faster than localeCompare when sorting ~48k songs
         const sortCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
         const DEFAULT_VIEW = 'list';
@@ -573,9 +549,23 @@
         // Web Audio Synthesizer Context
         let audioContext = null;
 
-        // Default song list lives in songs.csv (columns: No, Title, Artist). Edit that file to change the defaults.
-        const DEFAULT_SONGS_URL = 'songs.csv';
+        // Default song lists (columns: No, Title, Artist). Edit these files to change the defaults.
+        const DEFAULT_SOURCES = {
+            old: { url: 'songs.csv',      label: 'Old Version (47k)', subtitle: 'For SongHub (Old Ver.)' },
+            new: { url: 'songs_less.csv', label: 'New Version (42k)', subtitle: 'For SongHub (New Ver.)' }
+        };
         const SONGS_STORAGE_KEY = 'songbook_songs_data_v2';
+        const CUSTOM_NAME_KEY = 'songbook_custom_name';
+        const DEFAULT_KEY_STORAGE = 'songbook_default_source';
+        let activeDefaultKey = null; // null while a custom CSV is loaded
+
+        function getPreferredDefaultKey() {
+            try {
+                const k = localStorage.getItem(DEFAULT_KEY_STORAGE);
+                if (k && DEFAULT_SOURCES[k]) return k;
+            } catch (e) {}
+            return 'old';
+        }
 
         /**
          * Formats any song number string/number to 5 digits padding.
@@ -598,7 +588,6 @@
             if (params.has('q')) currentSearchQuery = params.get('q');
             if (params.has('scope')) currentScope = params.get('scope');
             if (params.has('letter')) currentLetter = params.get('letter');
-            if (params.has('sort')) currentSort = params.get('sort');
             if (params.has('view')) viewMode = params.get('view');
             if (params.has('favs')) showFavsOnly = params.get('favs') === '1';
         }
@@ -609,7 +598,6 @@
             if (currentSearchQuery) params.set('q', currentSearchQuery);
             if (currentScope !== 'all') params.set('scope', currentScope);
             if (currentLetter !== 'ALL') params.set('letter', currentLetter);
-            if (currentSort !== DEFAULT_SORT) params.set('sort', currentSort);
             if (viewMode !== DEFAULT_VIEW) params.set('view', viewMode);
             if (showFavsOnly) params.set('favs', '1');
 
@@ -626,9 +614,6 @@
                 searchInput.value = currentSearchQuery;
                 document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearchQuery === '');
             }
-            const sortSelect = document.getElementById('sortOption');
-            if (sortSelect) sortSelect.value = currentSort;
-
             setSearchScope(currentScope, false);
             setLetterFilter(currentLetter, false);
             setViewMode(viewMode, false);
@@ -686,8 +671,8 @@
             return rows;
         }
 
-        async function fetchDefaultSongs() {
-            const res = await fetch(DEFAULT_SONGS_URL, { cache: 'no-cache' });
+        async function fetchDefaultSongs(url) {
+            const res = await fetch(url, { cache: 'no-cache' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const rows = parseCsvText(await res.text());
             if (!rows.length) return [];
@@ -703,6 +688,26 @@
             return rows.slice(hasHeader ? 1 : 0).map(r => ({ no: r[iNo], title: r[iTitle], artist: r[iArtist] }));
         }
 
+        function setLoadedFile(name) {
+            const el = document.getElementById('infoFileName');
+            if (el) el.innerText = name || '-';
+        }
+
+        function updateDefaultToggleUI() {
+            Object.keys(DEFAULT_SOURCES).forEach(k => {
+                const b = document.getElementById('defaultBtn-' + k);
+                if (!b) return;
+                b.className = k === activeDefaultKey
+                    ? "flex-1 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition"
+                    : "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
+            });
+        }
+
+        function loadDefaultSource(key) {
+            closeUploadModal();
+            restoreDefaultDemoSongs(true, key);
+        }
+
         async function loadStoredOrDemoSongs() {
             try {
                 const saved = localStorage.getItem(SONGS_STORAGE_KEY);
@@ -710,8 +715,11 @@
                     const parsed = JSON.parse(saved);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         songbookSongs = processRawSongArray(parsed);
+                        activeDefaultKey = null;
                         document.getElementById('sourceBadge').innerText = "Loaded Saved Songs";
                         document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+                        setLoadedFile(localStorage.getItem(CUSTOM_NAME_KEY) || 'Custom CSV');
+                        updateDefaultToggleUI();
                         applyFiltersAndRender();
                         return;
                     }
@@ -722,27 +730,36 @@
             await restoreDefaultDemoSongs(false);
         }
 
-        async function restoreDefaultDemoSongs(notify = true) {
+        async function restoreDefaultDemoSongs(notify = true, key) {
+            key = (key && DEFAULT_SOURCES[key]) ? key : getPreferredDefaultKey();
+            const src = DEFAULT_SOURCES[key];
             const badge = document.getElementById('sourceBadge');
             badge.innerText = "Loading songs…";
             try {
-                songbookSongs = processRawSongArray(await fetchDefaultSongs());
+                songbookSongs = processRawSongArray(await fetchDefaultSongs(src.url));
             } catch (e) {
-                console.error("Could not load " + DEFAULT_SONGS_URL, e);
+                console.error("Could not load " + src.url, e);
                 songbookSongs = [];
                 badge.innerText = "Song list unavailable";
                 badge.className = "text-xs bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+                setLoadedFile(src.url + ' (failed to load)');
                 applyFiltersAndRender();
-                showToast("Couldn't load songs.csv. Check your connection and reload.", "error");
+                showToast("Couldn't load " + src.url + ". Check your connection and reload.", "error");
                 return;
             }
-            try { localStorage.removeItem(SONGS_STORAGE_KEY); } catch (e) {}
+            try { localStorage.removeItem(SONGS_STORAGE_KEY); localStorage.removeItem(CUSTOM_NAME_KEY); } catch (e) {}
+            safeSetLocalStorage(DEFAULT_KEY_STORAGE, key);
+            activeDefaultKey = key;
             document.getElementById('catalogTitle').innerText = "SongHub Songbook";
+            document.getElementById('brandSubtitle').innerText = src.subtitle;
             badge.innerText = "Default Songs Loaded";
             badge.className = "text-xs bg-gold-500/20 text-gold-400 border border-gold-500/30 px-2.5 py-0.5 rounded-full font-semibold";
+            setLoadedFile(src.url + ' · ' + src.label);
+            updateDefaultToggleUI();
+            visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
             if (notify) {
-                showToast("Restored default SongHub songbook!", "success");
+                showToast("Loaded " + src.label + " songbook!", "success");
             }
         }
 
@@ -776,59 +793,14 @@
             const input = document.getElementById('searchInput');
             currentSearchQuery = input.value.trim().toLowerCase();
             document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearchQuery === '');
-            syncFloatSearchFromMain();
             visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
         }
 
 
-        // ===== Floating search bar =====
-        function toggleFloatingSearch() {
-            document.getElementById('floatSearch').classList.contains('open') ? closeFloatingSearch() : openFloatingSearch();
-        }
-
-        function openFloatingSearch() {
-            const bar = document.getElementById('floatSearch');
-            const input = document.getElementById('floatSearchInput');
-            input.value = document.getElementById('searchInput').value;
-            bar.classList.add('open');
-            bar.setAttribute('aria-hidden', 'false');
-            document.body.classList.add('search-open');
-            document.getElementById('searchToggleBtn').setAttribute('aria-expanded', 'true');
-            document.getElementById('floatSearchClear').classList.toggle('hidden', input.value === '');
-            updateScrollStatus();
-            // focus inside the tap gesture so iOS shows the keyboard
-            input.focus({ preventScroll: true });
-            input.select();
-        }
-
-        function closeFloatingSearch() {
-            const bar = document.getElementById('floatSearch');
-            document.getElementById('floatSearchInput').blur();
-            bar.classList.remove('open');
-            bar.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('search-open');
-            document.getElementById('searchToggleBtn').setAttribute('aria-expanded', 'false');
-        }
-
-        function handleFloatSearchInput() {
-            const v = document.getElementById('floatSearchInput').value;
-            document.getElementById('searchInput').value = v;
-            document.getElementById('floatSearchClear').classList.toggle('hidden', v === '');
-            handleSearchChange();
-        }
-
-        function handleFloatSearchKey(e) {
-            if (e.key === 'Enter') e.target.blur();          // dismiss the keyboard, keep the bar
-            else if (e.key === 'Escape') closeFloatingSearch();
-        }
-
-        function clearFloatSearch() {
-            const input = document.getElementById('floatSearchInput');
-            input.value = '';
-            document.getElementById('floatSearchClear').classList.add('hidden');
-            clearSearchInput();
-            input.focus({ preventScroll: true });
+        // ===== Bottom search bar =====
+        function handleSearchKey(e) {
+            if (e.key === 'Enter') e.target.blur();   // dismiss the keyboard, keep the bar
         }
 
         // keep the bar above the iOS/Android on-screen keyboard
@@ -842,19 +814,10 @@
             window.visualViewport.addEventListener('scroll', adjustForKeyboard);
         }
 
-        function syncFloatSearchFromMain() {
-            const f = document.getElementById('floatSearchInput');
-            const m = document.getElementById('searchInput');
-            if (f && m && f.value !== m.value) f.value = m.value;
-            const c = document.getElementById('floatSearchClear');
-            if (c && m) c.classList.toggle('hidden', m.value === '');
-        }
-
         function clearSearchInput() {
             document.getElementById('searchInput').value = '';
             currentSearchQuery = '';
             document.getElementById('clearSearchBtn').classList.add('hidden');
-            syncFloatSearchFromMain();
             visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
         }
@@ -891,11 +854,6 @@
                 visibleCount = BATCH_SIZE;
                 applyFiltersAndRender();
             }
-        }
-
-        function handleSortChange() {
-            currentSort = document.getElementById('sortOption').value;
-            applyFiltersAndRender();
         }
 
         function toggleFavoritesOnly() {
@@ -959,27 +917,11 @@
                 return matchesSearch && matchesLetter && matchesFavs;
             });
 
-            filteredSongs.sort((a, b) => {
-                switch (currentSort) {
-                    case 'num-asc':
-                        return a.intNo - b.intNo || a.id.localeCompare(b.id);
-                    case 'num-desc':
-                        return b.intNo - a.intNo || b.id.localeCompare(a.id);
-                    case 'title-asc':
-                        return sortCollator.compare(a.title, b.title);
-                    case 'title-desc':
-                        return sortCollator.compare(b.title, a.title);
-                    case 'artist-asc':
-                        return sortCollator.compare(a.artist, b.artist);
-                    case 'artist-desc':
-                        return sortCollator.compare(b.artist, a.artist);
-                    default:
-                        return 0;
-                }
-            });
+            // Always sorted by title
+            filteredSongs.sort((a, b) => sortCollator.compare(a.title, b.title));
 
-            document.getElementById('statTotalSongs').innerText = songbookSongs.length;
-            document.getElementById('statFilteredSongs').innerText = filteredSongs.length;
+            document.getElementById('statTotalSongs').innerText = songbookSongs.length.toLocaleString();
+            document.getElementById('statFilteredSongs').innerText = filteredSongs.length.toLocaleString();
 
             renderSongsDisplay();
         }
@@ -1257,8 +1199,21 @@
             }
         }
 
+        function openInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
         function openUploadModal() {
             resetUploadUI();
+            updateDefaultToggleUI();
             const modal = document.getElementById('uploadModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1368,6 +1323,10 @@
                 
                 const displayTitle = fileName !== "Selected File" ? fileName.replace(/\.[^/.]+$/, '') : 'Custom Songbook';
                 document.getElementById('catalogTitle').innerText = displayTitle;
+                activeDefaultKey = null;
+                setLoadedFile(fileName);
+                if (isSaved) safeSetLocalStorage(CUSTOM_NAME_KEY, fileName);
+                updateDefaultToggleUI();
                 document.getElementById('sourceBadge').innerText = isSaved ? "Custom File Loaded" : "Session Mode";
                 document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
 
@@ -1457,6 +1416,10 @@
 
             closeUploadModal();
             document.getElementById('catalogTitle').innerText = "Pasted Songbook";
+            activeDefaultKey = null;
+            setLoadedFile('Pasted CSV text');
+            if (isSaved) safeSetLocalStorage(CUSTOM_NAME_KEY, 'Pasted CSV text');
+            updateDefaultToggleUI();
             document.getElementById('sourceBadge').innerText = isSaved ? "Custom File Loaded" : "Session Mode";
             document.getElementById('sourceBadge').className = "text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold";
 

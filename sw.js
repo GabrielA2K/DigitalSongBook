@@ -1,11 +1,12 @@
 /* Service worker: offline-first for the app shell + third-party libs/fonts */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'songbook-' + VERSION;
 
 const SHELL = [
   './',
   './index.html',
   './songs.csv',
+  './songs_less.csv',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -82,16 +83,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Default song list: network-first so edits to songs.csv show up, cached copy when offline.
-  if (url.origin === location.origin && url.pathname.endsWith('/songs.csv')) {
+  // Default song lists: network-first so edits show up, cached copy when offline.
+  if (url.origin === location.origin && /\/songs(_less)?\.csv$/.test(url.pathname)) {
+    const key = './' + url.pathname.split('/').pop();
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
       try {
         const fresh = await fetch(req);
-        if (fresh.ok) cache.put('./songs.csv', fresh.clone());
+        if (fresh.ok) cache.put(key, fresh.clone());
         return fresh;
       } catch (e) {
-        return (await cache.match('./songs.csv', { ignoreSearch: true })) || new Response('', { status: 504 });
+        return (await cache.match(key, { ignoreSearch: true })) || new Response('', { status: 504 });
       }
     })());
     return;
