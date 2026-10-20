@@ -159,9 +159,9 @@
 
         /* ===== Floating search bar ===== */
         #bottom-nav {
-            /* transform: translateY(var(--kb-offset, 0px)); */
+            transform: translateY(var(--kb-offset, 0px));
             /* transition: transform 0.25s ease; */
-            /* will-change: transform; */
+            will-change: transform;
 
         }
         #floatSearch {
@@ -456,7 +456,7 @@
 
     <!-- Toast Notification Container -->
     <!-- Search bar (pinned at the bottom) -->
-     <div id="bottom-nav" class="bg-stage-900/90 fixed bottom-0 left-0 right-0 min-h-32 z-1 p-3 sm:p-4 border-t border-stage-800/80 backdrop-blur-md flex ">
+     <div id="bottom-nav" class="bg-stage-900/90 fixed pb-[20rem] sm:pb-[20rem] bottom-[-19.3rem] left-0 right-0 min-h-32 z-1 p-3 sm:p-4 border-t border-stage-800/80 backdrop-blur-md flex">
         <div class="flex flex-col items-stretch justify-end w-full max-w-7xl mx-auto">
             <div id="floatSearch" class="no-print mb-2">
                 <div class="float-search-inner">
