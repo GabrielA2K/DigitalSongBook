@@ -283,7 +283,7 @@
             <!-- Header Quick Controls -->
             <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
                 <!-- Favorites Filter Button -->
-                <button id="favsToggleBtn" onclick="toggleFavoritesOnly()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-xs sm:text-sm font-semibold border border-stage-700/80 flex items-center space-x-1.5 sm:space-x-2 transition text-slate-300">
+                <button id="favsToggleBtn" onclick="toggleFavoritesOnly(); jumpToTop();" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-stage-800 hover:bg-stage-700 text-xs sm:text-sm font-semibold border border-stage-700/80 flex items-center space-x-1.5 sm:space-x-2 transition text-slate-300">
                     <i class="fa-solid fa-star text-amber-400 text-xs sm:text-sm"></i>
                     <span class="hidden md:inline">Favorites</span>
                     <span id="favsCountBadge" class="bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold">0</span>
@@ -523,9 +523,9 @@
                     <!-- Scope Filter Buttons -->
                     <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar font-medium text-xs -mx-1 px-1">
                         <!-- <span class="text-slate-400 mr-1 hidden sm:inline flex-shrink-0">Search in:</span> -->
-                        <button onclick="setSearchScope('all')" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0">All</button>
-                        <button onclick="setSearchScope('title')" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Title</button>
-                        <button onclick="setSearchScope('artist')" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Artist</button>
+                        <button onclick="setSearchScope('all');jumpToTop();" id="scope-all" class="scope-btn px-3 py-2 rounded-lg bg-gold-500 text-slate-950 font-bold transition shadow-sm flex-shrink-0">All</button>
+                        <button onclick="setSearchScope('title');jumpToTop();" id="scope-title" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Title</button>
+                        <button onclick="setSearchScope('artist');jumpToTop();" id="scope-artist" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Artist</button>
                         <!-- <button onclick="setSearchScope('number')" id="scope-number" class="scope-btn px-3 py-2 rounded-lg bg-stage-950 text-slate-300 hover:bg-stage-800 border border-stage-700 transition flex-shrink-0">Song #</button> -->
                     </div>
 
@@ -846,7 +846,7 @@
             const letters = ['ALL', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
             const container = document.getElementById('alphabetBar');
             container.innerHTML = letters.map(let => `
-                <button onclick="setLetterFilter('${let}')" id="let-${let}" class="px-2.5 py-1.5 min-w-[32px] h-8 rounded-md flex items-center justify-center ${let === 'ALL' ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800'} transition flex-shrink-0">
+                <button onclick="setLetterFilter('${let}');jumpToTop();" id="let-${let}" class="px-2.5 py-1.5 min-w-[32px] h-8 rounded-md flex items-center justify-center ${let === 'ALL' ? 'bg-gold-500 text-slate-950 font-bold' : 'bg-stage-950 text-slate-400 hover:text-white hover:bg-stage-800'} transition flex-shrink-0">
                     ${let}
                 </button>
             `).join('');
@@ -858,6 +858,8 @@
             document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearchQuery === '');
             visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
+            jumpToTop();
+            setLetterFilter('ALL', false);
         }
 
 
@@ -883,6 +885,7 @@
             document.getElementById('clearSearchBtn').classList.add('hidden');
             visibleCount = BATCH_SIZE;
             applyFiltersAndRender();
+            jumpToTop();
         }
 
         function setSearchScope(scope, triggerRender = true) {
@@ -1098,6 +1101,9 @@
 
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function jumpToTop() {
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         window.addEventListener('scroll', () => {

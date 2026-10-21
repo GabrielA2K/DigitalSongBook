@@ -1,5 +1,5 @@
 /* Service worker: local-first offline caching for app shell and fonts */
-const VERSION = 'v16';
+const VERSION = 'v17';
 const CACHE = 'songbook-' + VERSION;
 
 // Local assets precached on service worker installation
